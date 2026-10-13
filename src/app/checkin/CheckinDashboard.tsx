@@ -5,6 +5,8 @@ import {
   AlertTriangle,
   ArrowRight,
   Calendar,
+  Camera,
+  CameraOff,
   CheckCircle2,
   Clock,
   HelpCircle,
@@ -15,6 +17,7 @@ import {
   RefreshCw,
   Search,
   Undo2,
+  Users,
   Volume2,
   VolumeX,
   X,
@@ -29,6 +32,7 @@ import {
   searchRegistrationsAction,
   verifyAndCheckinAction,
 } from "@/app/actions/checkin";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -75,6 +79,20 @@ export function CheckinDashboard({
     return firstActive ? firstActive.id : initialEvents?.[0]?.id || "";
   });
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [modalInitialTab, setModalInitialTab] = useState<
+    "list" | "create" | "attendees"
+  >("list");
+
+  // Camera scanner enable/disable
+  const [isScannerEnabled, setIsScannerEnabled] = useState(true);
+
+  const openEventModal = useCallback(
+    (tab: "list" | "create" | "attendees" = "list") => {
+      setModalInitialTab(tab);
+      setIsEventModalOpen(true);
+    },
+    [],
+  );
 
   // Sound enable/disable
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -256,6 +274,8 @@ export function CheckinDashboard({
           setEvents(updatedEvents);
           refreshStats(selectedEventId);
         }}
+        initialTab={modalInitialTab}
+        onCheckinAttendee={(code) => handleCheckin(code)}
       />
 
       {/* TOP HEADER & CONTROLS */}
@@ -277,18 +297,34 @@ export function CheckinDashboard({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Attendees List Trigger */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => openEventModal("attendees")}
+            className="font-semibold"
+            title="Zobrazit seznam zaregistrovaných účastníků"
+          >
+            <Users className="h-4 w-4 text-primary" />
+            <span>Účastníci ({stats.total})</span>
+          </Button>
+
           {/* Manage Events Modal Trigger */}
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setIsEventModalOpen(true)}
+            onClick={() => openEventModal("list")}
             className="font-semibold"
             title="Spravovat a vytvářet události"
           >
             <Layers className="h-4 w-4 text-primary" />
-            <span>Správa akcí</span>
+            <span className="hidden sm:inline">Správa akcí</span>
           </Button>
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
 
           {/* Sound Toggle */}
           <Button
@@ -383,23 +419,33 @@ export function CheckinDashboard({
       {/* STATS OVERVIEW BAR */}
       <Card className="p-4 shadow-sm">
         <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
-          <div className="rounded-xl bg-muted/60 p-3">
+          <button
+            type="button"
+            onClick={() => openEventModal("attendees")}
+            className="rounded-xl bg-muted/60 p-3 hover:bg-muted transition-colors text-center cursor-pointer"
+            title="Zobrazit všechny registrované"
+          >
             <p className="text-xs font-bold uppercase tracking-wider text-primary">
               Registrováno
             </p>
             <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-foreground">
               {stats.total}
             </p>
-          </div>
+          </button>
 
-          <div className="rounded-xl bg-emerald-950/30 border border-emerald-500/20 p-3">
+          <button
+            type="button"
+            onClick={() => openEventModal("attendees")}
+            className="rounded-xl bg-emerald-950/30 border border-emerald-500/20 p-3 hover:bg-emerald-950/50 transition-colors text-center cursor-pointer"
+            title="Zobrazit odbavené účastníky"
+          >
             <p className="text-xs font-bold uppercase tracking-wider text-emerald-400">
               Odbaveno u vstupu
             </p>
             <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-emerald-400">
               {stats.attended}
             </p>
-          </div>
+          </button>
 
           <div className="rounded-xl bg-muted/60 p-3">
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -458,13 +504,12 @@ export function CheckinDashboard({
           {/* Title & Message */}
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             {activeResult.status === "SUCCESS" &&
-              "✅ PLATNÁ REGISTRACE • MŮŽOU JÍT!"}
+              "PLATNÁ REGISTRACE • VSTUP POVOLEN"}
             {activeResult.status === "ALREADY_CHECKED_IN" &&
-              "⛔ POZOR: JIŽ UPLATNĚNO!"}
+              "POZOR: JIŽ UPLATNĚNO"}
             {activeResult.status === "WRONG_EVENT" &&
-              "⚠️ POZOR: KÓD PRO JINOU UDÁLOST!"}
-            {activeResult.status === "NOT_FOUND" &&
-              "❓ NENALEZENO / NEPLATNÝ KÓD"}
+              "POZOR: KÓD PRO JINOU UDÁLOST"}
+            {activeResult.status === "NOT_FOUND" && "NENALEZENO / NEPLATNÝ KÓD"}
           </h2>
 
           <p className="mt-2 text-base sm:text-lg font-medium text-white/95 max-w-xl mx-auto">
@@ -561,18 +606,71 @@ export function CheckinDashboard({
               <Zap className="h-4 w-4 text-primary" />
               Kamerový skener
             </h2>
-            {isProcessing && (
-              <span className="flex items-center gap-1 text-xs text-primary font-semibold">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Ověřuji...
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {isProcessing && (
+                <span className="flex items-center gap-1 text-xs text-primary font-semibold">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Ověřuji...
+                </span>
+              )}
+              <Button
+                type="button"
+                variant={isScannerEnabled ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => setIsScannerEnabled(!isScannerEnabled)}
+                title={
+                  isScannerEnabled
+                    ? "Vypnout kameru (šetří baterii zařízení)"
+                    : "Zapnout kameru"
+                }
+                className="h-7 px-2.5 text-xs font-semibold"
+              >
+                {isScannerEnabled ? (
+                  <>
+                    <CameraOff className="h-3.5 w-3.5 text-muted-foreground mr-1" />
+                    <span>Vypnout skener</span>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-3.5 w-3.5 text-primary mr-1" />
+                    <span>Zapnout skener</span>
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
 
-          <QrScanner
-            onScan={(code) => handleCheckin(code)}
-            isPaused={isProcessing || activeResult !== null}
-          />
+          {isScannerEnabled ? (
+            <QrScanner
+              onScan={(code) => handleCheckin(code)}
+              isPaused={isProcessing || activeResult !== null}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center p-8 border border-dashed border-border rounded-2xl bg-muted/20 text-center space-y-3 min-h-[260px]">
+              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                <CameraOff className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-foreground">
+                  Kamerový skener je vypnutý
+                </p>
+                <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+                  Kamera je odpojena a nečerpá baterii zařízení. Kód můžete
+                  zadat ručně vpravo nebo kameru znovu zapnout.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={() => setIsScannerEnabled(true)}
+                className="mt-2"
+              >
+                <Camera className="h-4 w-4 mr-1.5" />
+                <span>Zapnout kameru</span>
+              </Button>
+            </div>
+          )}
         </Card>
 
         {/* BACKUP MANUAL ENTRY & SEARCH */}
@@ -717,7 +815,7 @@ export function CheckinDashboard({
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
-                    ✓
+                    <CheckCircle2 className="h-4 w-4" />
                   </div>
                   <div>
                     <p className="font-bold text-foreground">

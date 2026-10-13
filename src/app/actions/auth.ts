@@ -15,6 +15,30 @@ export async function loginOrganizerAction(password: string): Promise<{
     return { success: false, error: "Zadejte heslo organizátora" };
   }
 
+  const adminPassword = process.env.ADMIN_PASSWORD?.trim();
+  if (!adminPassword) {
+    console.error(
+      "[Auth Error] ADMIN_PASSWORD environment variable is not configured.",
+    );
+    return {
+      success: false,
+      error:
+        "Na serveru není nakonfigurováno heslo organizátora (ADMIN_PASSWORD).",
+    };
+  }
+
+  const authSecret = process.env.AUTH_SECRET?.trim();
+  if (!authSecret || authSecret.length < 32) {
+    console.error(
+      "[Auth Error] AUTH_SECRET environment variable is missing or under 32 characters.",
+    );
+    return {
+      success: false,
+      error:
+        "Na serveru není správně nastaven klíč pro podepisování relací (AUTH_SECRET).",
+    };
+  }
+
   const isValid = verifyOrganizerPassword(password);
   if (!isValid) {
     return {

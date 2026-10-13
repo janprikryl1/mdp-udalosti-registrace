@@ -1,10 +1,11 @@
 "use client";
 
-import { CheckCircle2, Menu, Sparkles, X } from "lucide-react";
+import { CheckCircle2, Menu, X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 
 export function Navbar() {
@@ -21,18 +22,19 @@ export function Navbar() {
           href="/"
           className="group flex items-center gap-3 transition-transform active:scale-95"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-sm shadow-orange-500/20 group-hover:scale-105 transition-transform">
-            <Sparkles className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 border border-orange-500/25 p-1 group-hover:scale-105 transition-transform shadow-xs">
+            <Image
+              src="/mdp-icon.png"
+              alt="Mládež Děkanátu Prostějov logo"
+              width={36}
+              height={36}
+              className="h-full w-full object-contain"
+              priority
+            />
           </div>
           <div>
-            <div className="flex items-center gap-1.5 font-bold text-foreground leading-tight tracking-tight">
+            <div className="font-bold text-foreground leading-tight tracking-tight text-base sm:text-lg">
               <span>Církevní Silvestr</span>
-              <Badge
-                variant="brand"
-                className="text-[10px] uppercase font-bold tracking-wider px-2 py-0"
-              >
-                Zdarma
-              </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
               Mládež děkanátu Prostějov
@@ -74,6 +76,8 @@ export function Navbar() {
 
         {/* Action Buttons using shadcn Button */}
         <div className="hidden md:flex items-center gap-2.5">
+          <ThemeToggle />
+
           <Button
             asChild
             variant={isCheckin ? "secondary" : "outline"}
@@ -90,21 +94,25 @@ export function Navbar() {
           </Button>
         </div>
 
-        {/* Mobile Hamburger */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden text-foreground"
-          aria-label="Přepnout menu"
-        >
-          {mobileMenuOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <Menu className="h-6 w-6" />
-          )}
-        </Button>
+        {/* Mobile controls */}
+        <div className="flex md:hidden items-center gap-1.5">
+          <ThemeToggle size="icon" variant="ghost" />
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="text-foreground"
+            aria-label="Přepnout menu"
+          >
+            {mobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Mobile Drawer */}
@@ -158,6 +166,10 @@ export function Navbar() {
                   Vstup pro organizátory (Check-in)
                 </Link>
               </Button>
+              <div className="flex items-center justify-between px-1 pt-1 text-xs text-muted-foreground">
+                <span>Vzhled aplikace</span>
+                <ThemeToggle showLabel />
+              </div>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { render } from "@react-email/components";
 import { Resend } from "resend";
 import { TicketEmail } from "@/emails/TicketEmail";
+import { generateQRCodeBuffer } from "./qrcode";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -12,7 +13,8 @@ export interface SendTicketEmailParams {
   email: string;
   city: string;
   registrationId: string;
-  qrCodeDataUrl: string;
+  qrCodeDataUrl?: string;
+  qrCodeBuffer?: Buffer;
 }
 
 export async function sendTicketEmail(params: SendTicketEmailParams): Promise<{
@@ -26,6 +28,22 @@ export async function sendTicketEmail(params: SendTicketEmailParams): Promise<{
   const eventTitle = params.eventName || "Církevní Silvestr";
 
   try {
+    // Extract base64 image payload (without data: prefix) for the inline MIME attachment.
+    // Gmail strictly blocks data:image/... URIs in <img>, but renders inline attachments with matching contentId (cid:).
+    let base64Image = "";
+    if (params.qrCodeBuffer) {
+      base64Image = params.qrCodeBuffer.toString("base64");
+    } else if (params.qrCodeDataUrl) {
+      base64Image = params.qrCodeDataUrl.includes("base64,")
+        ? params.qrCodeDataUrl.split("base64,")[1]
+        : params.qrCodeDataUrl;
+    }
+
+    if (!base64Image) {
+      const buffer = await generateQRCodeBuffer(params.registrationId);
+      base64Image = buffer.toString("base64");
+    }
+
     const html = await render(
       TicketEmail({
         eventName: eventTitle,
@@ -34,14 +52,14 @@ export async function sendTicketEmail(params: SendTicketEmailParams): Promise<{
         email: params.email,
         city: params.city,
         registrationId: params.registrationId,
-        qrCodeDataUrl: params.qrCodeDataUrl,
+        qrCodeSrc: "cid:ticket-qr-code",
         ticketUrl,
       }),
     );
 
     if (!resend) {
       console.log(
-        `[Dev Email Sim] Resend API klíč není nastaven. E-mail (${eventTitle}) pro ${params.email} (${params.firstName} ${params.lastName}) byl simulován. Vstupenka: ${ticketUrl}`,
+        `[Email Simulation] RESEND_API_KEY is not set. Ticket email (${eventTitle}) for ${params.email} (${params.firstName} ${params.lastName}) simulated. URL: ${ticketUrl}`,
       );
       return { success: true, simulated: true };
     }
@@ -54,6 +72,14 @@ export async function sendTicketEmail(params: SendTicketEmailParams): Promise<{
       to: params.email,
       subject: `Potvrzení registrace na ${eventTitle} (vstupní QR kód)`,
       html,
+      attachments: [
+        {
+          filename: `vstupenka-qr-${params.registrationId.slice(0, 8)}.png`,
+          content: base64Image,
+          contentType: "image/png",
+          contentId: "ticket-qr-code",
+        },
+      ],
     });
 
     if (error) {
@@ -69,7 +95,7 @@ export async function sendTicketEmail(params: SendTicketEmailParams): Promise<{
       error:
         error instanceof Error
           ? error.message
-          : "Neznámá chyba při odesílání e-mailu",
+          : "An unknown error occurred while sending email",
     };
   }
 }

@@ -99,9 +99,6 @@ export function LoginForm({ onLoginSuccess }: { onLoginSuccess?: () => void }) {
                 className="pl-10"
               />
             </div>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              Výchozí heslo je nastaveno v souboru .env (ADMIN_PASSWORD).
-            </p>
           </div>
 
           <Button

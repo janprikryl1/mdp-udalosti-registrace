@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
 
@@ -5,15 +6,32 @@ const SESSION_COOKIE_NAME = "organizer_session";
 const SESSION_DURATION = 60 * 60 * 24; // 24 hours in seconds
 
 function getSecretKey(): Uint8Array {
-  const secret =
-    process.env.AUTH_SECRET ||
-    "silvestr-secret-fallback-key-prostejov-2025-at-least-32-chars";
+  const secret = process.env.AUTH_SECRET?.trim();
+  if (!secret || secret.length < 32) {
+    throw new Error(
+      "AUTH_SECRET environment variable is missing or shorter than 32 characters. Configure a secure secret key.",
+    );
+  }
   return new TextEncoder().encode(secret);
 }
 
 export function verifyOrganizerPassword(password: string): boolean {
-  const adminPassword = process.env.ADMIN_PASSWORD || "silvestr-prostejov";
-  return password.trim() === adminPassword.trim();
+  const adminPassword = process.env.ADMIN_PASSWORD?.trim();
+  if (!adminPassword) {
+    console.error(
+      "[Auth Error] ADMIN_PASSWORD environment variable is not configured. Access denied.",
+    );
+    return false;
+  }
+
+  const inputBuffer = Buffer.from(password.trim());
+  const targetBuffer = Buffer.from(adminPassword);
+
+  if (inputBuffer.length !== targetBuffer.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(inputBuffer, targetBuffer);
 }
 
 export async function createOrganizerToken(): Promise<string> {

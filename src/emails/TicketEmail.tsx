@@ -20,7 +20,8 @@ interface TicketEmailProps {
   email: string;
   city: string;
   registrationId: string;
-  qrCodeDataUrl: string;
+  qrCodeSrc?: string;
+  qrCodeDataUrl?: string;
   ticketUrl: string;
 }
 
@@ -31,9 +32,18 @@ export function TicketEmail({
   email = "jan.novak@example.cz",
   city = "Prostějov",
   registrationId = "c796b34a-95ee-46a4-97c3-30528e188f57",
+  qrCodeSrc,
   qrCodeDataUrl = "",
   ticketUrl = "http://localhost:3000/registrace/uspech?id=test",
 }: TicketEmailProps) {
+  // Gmail completely blocks "data:image/..." URIs.
+  // Using cid:ticket-qr-code pairs with the Resend attachment contentId for 100% reliable rendering in Gmail.
+  const resolvedQrSrc =
+    qrCodeSrc ||
+    (qrCodeDataUrl && !qrCodeDataUrl.startsWith("data:")
+      ? qrCodeDataUrl
+      : "cid:ticket-qr-code");
+
   return (
     <Html lang="cs">
       <Head />
@@ -63,20 +73,28 @@ export function TicketEmail({
             {/* QR Card */}
             <Section style={qrCard}>
               <Text style={qrCardTitle}>TVŮJ OSOBNÍ QR KÓD PRO VSTUP</Text>
-              {qrCodeDataUrl ? (
+              <Link
+                href={ticketUrl}
+                target="_blank"
+                style={{ display: "inline-block" }}
+              >
                 <Img
-                  src={qrCodeDataUrl}
+                  src={resolvedQrSrc}
                   alt="QR kód pro vstup"
                   width="220"
                   height="220"
                   style={qrImage}
                 />
-              ) : (
-                <Text style={codeFallbackText}>{registrationId}</Text>
-              )}
+              </Link>
               <Text style={qrInstruction}>
                 U vstupu stačí tento QR kód ukázat na displeji mobilu nebo
                 vytištěný.
+              </Text>
+              <Text style={qrNotice}>
+                Nezobrazuje se obrázek?{" "}
+                <Link href={ticketUrl} style={qrNoticeLink}>
+                  Klepni sem pro zobrazení vstupenky
+                </Link>
               </Text>
             </Section>
 
@@ -236,18 +254,23 @@ const qrImage: React.CSSProperties = {
   padding: "8px",
 };
 
-const codeFallbackText: React.CSSProperties = {
-  fontSize: "16px",
-  fontWeight: "bold",
-  fontFamily: "monospace",
-  color: "#0f172a",
-};
-
 const qrInstruction: React.CSSProperties = {
   fontSize: "13px",
   color: "#7c2d12",
   margin: "12px 0 0 0",
   fontWeight: "500",
+};
+
+const qrNotice: React.CSSProperties = {
+  fontSize: "12px",
+  color: "#9a3412",
+  margin: "10px 0 0 0",
+};
+
+const qrNoticeLink: React.CSSProperties = {
+  color: "#ea580c",
+  fontWeight: "bold",
+  textDecoration: "underline",
 };
 
 const detailsBox: React.CSSProperties = {

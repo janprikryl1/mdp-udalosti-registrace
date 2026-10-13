@@ -12,8 +12,25 @@ export async function generateQRCodeDataUrl(text: string): Promise<string> {
       },
     });
   } catch (error) {
-    console.error("Chyba při generování QR kódu:", error);
-    throw new Error("Nepodařilo se vygenerovat QR kód");
+    console.error("Failed to generate QR code data URL:", error);
+    throw new Error("Failed to generate QR code data URL");
+  }
+}
+
+export async function generateQRCodeBuffer(text: string): Promise<Buffer> {
+  try {
+    return await QRCode.toBuffer(text, {
+      errorCorrectionLevel: "M",
+      margin: 2,
+      width: 400,
+      color: {
+        dark: "#1e1b4b", // deep navy/slate
+        light: "#ffffff",
+      },
+    });
+  } catch (error) {
+    console.error("Failed to generate QR code buffer:", error);
+    throw new Error("Failed to generate QR code buffer");
   }
 }
 

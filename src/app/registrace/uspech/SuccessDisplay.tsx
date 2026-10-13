@@ -172,8 +172,8 @@ export function SuccessDisplay({
         </div>
 
         <p className="mt-4 text-xs font-semibold text-slate-600 max-w-sm mx-auto">
-          💡 <strong>Tip pro rychlý vstup:</strong> Ulož si tento QR kód do
-          fotek v mobilu nebo měj připravený displej u vchodu.
+          <strong>Tip pro rychlý vstup:</strong> Ulož si tento QR kód do fotek v
+          mobilu nebo měj připravený displej u vchodu.
         </p>
 
         {/* Action Buttons inside light ticket */}

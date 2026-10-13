@@ -1,134 +1,170 @@
-# Církevní Silvestr & Akce mládeže – Multi-Event Registrace a QR Odbavení
+# QR Entry
 
-Moderní webová aplikace pro online registraci, generování vstupenek a bleskové QR odbavení účastníků akcí pořádaných mládeží děkanátu Prostějov ([mladez.dpv.cz](https://mladez.dpv.cz)).
+A modern, high-throughput multi-event participant registration and QR admission system. Built with Next.js (App Router), TypeScript, Tailwind CSS, Prisma ORM, and Resend.
 
-Systém je navržen jako **obecný multi-event ticketing**, kde je výchozí akcí **"Církevní Silvestr"**, ale organizátoři mohou v administraci snadno vytvářet další akce (např. *Večery chval, Diecézní setkání mládeže, tábory, ples mládeže*), filtrovat data a přepínat, na kterou akci se u vchodu zrovna skenuje.
-
-Všechny akce jsou typicky **zdarma** a hlavním cílem aplikace je **zcela eliminovat fronty u vstupu** – účastník se předem zaregistruje, obdrží osobní QR kód a u vchodu je odbaven během 3 vteřin přímo z displeje mobilu.
+The application allows organizers to manage multiple events, accept attendee registrations, dispatch tickets with inline QR codes via email, and rapidly admit attendees at entrances using a mobile or desktop camera scanner.
 
 ---
 
-## 🚀 Klíčové funkce
+## Features
 
-### 1. Multi-Event architektura & Správa událostí
-- **Dynamická tvorba událostí:** Organizátor může v rozhraní `/checkin` kliknout na **"Správa akcí"** a vytvořit novou událost (Název, Datum a čas, Místo konání, URL slug, Popis).
-- **Aktivace / Pozastavení:** Každou akci lze jedním kliknutím aktivovat nebo pozastavit pro veřejné registrace.
-- **Přepínač skenování na terminálu:** Organizátor u vchodu volí v horní liště akci, na kterou zrovna účastníky vpouští (např. *Církevní Silvestr 2025* nebo *Večer chval*).
-- **Ochrana proti záměně akcí (Cross-event safety):** Pokud účastník ukáže QR kód z jiné události, systém okamžitě zobrazí varování:  
-  `⚠️ POZOR: KÓD PRO JINOU UDÁLOST! Tento kód je platný pro akci "Církevní Silvestr", nikoli pro vybranou akci "Večer chval"!`  
-  Organizátor může jedním kliknutím přepnout na dotyčnou akci a účastníka odbavit.
+### Multi-Event Management
+- **Dynamic Event Creation:** Organizers can create, edit, activate, pause, and delete events with dedicated titles, locations, dates, descriptions, and URL slugs.
+- **Cross-Event Verification:** Prevents unauthorized admission when an attendee presents a QR code for a different event, providing organizers with an instant notification and an option to switch events.
+- **Attendee Directory & Export:** View filtered attendee lists per event or across all events, search by attendee name or email, manually toggle admission, delete entries, and copy CSV data to the clipboard.
 
-### 2. Veřejná Homepage (`/`)
-- Moderní, přátelský design laděný do stylu mládeže děkanátu Prostějov.
-- Klíčové informace o hlavní akci: program večera, místo konání, bezplatný vstup, co vzít s sebou.
-- Dynamický přehled otevřených akcí: Pokud je aktivních více akcí, zobrazí se interaktivní kalendář s přímými odkazy na registrace (`/registrace?event=slug`).
-- Výrazné CTA prvky pro eliminaci front u vstupu.
+### Public Registration & Ticketing
+- **Registration Form:** Validated using `react-hook-form` and `zod`, capturing participant details (name, email, parish/residence) and associating them with the active event.
+- **Instant Digital Pass:** Directs confirmed attendees to a dedicated ticket page (`/registrace/uspech?id=...`) displaying the participant pass, downloadable PNG QR code, and `.ics` calendar invitation.
+- **Email Delivery:** Dispatches confirmation emails via the Resend API using React Email templates. QR codes are embedded as inline MIME attachments using Content-ID (`cid:ticket-qr-code`) to guarantee rendering across email clients that block base64 data URIs (such as Gmail).
 
-### 3. Registrační formulář (`/registrace`)
-- Výběr akce (pokud je otevřeno více akcí) nebo předvyplnění přes URL parametr `?event=slug`.
-- Validace formuláře přes `react-hook-form` + `@hookform/resolvers` + `zod`.
-- Pole: Jméno, Příjmení, E-mail, Bydliště / Farnost.
-- Uložení záznamu do databáze ve stavu `REGISTERED`.
-- Vygenerování unikátního QR kódu (`qrcode`).
-- Odeslání potvrzovacího e-mailu s dynamickým názvem akce a QR kódem přes **Resend SDK** a **@react-email/components**.
+### Check-in Terminal (`/checkin`)
+- **Protected Access:** Secured with password-based authentication and signed HTTP-only JWT session cookies using `jose`.
+- **In-Browser Optical Scanner:** Powered by `html5-qrcode` with support for front/rear camera selection and a manual toggle to disable camera streams and conserve device battery.
+- **Audio-Visual Feedback:** Synthesized sound cues via the Web Audio API provide instant confirmation for valid tickets, duplicate entries, mismatched events, and unknown codes without external media files.
+- **Manual Lookup:** Organizers can search and check in participants by name, email, or registration UUID when scanning a physical display is not possible.
+- **Reversible Check-in:** Organizers can undo accidental check-in operations with a single click.
 
-### 4. Děkovací stránka / Vstupenka (`/registrace/uspech?id=...`)
-- Zobrazení údajů účastníka a velkého přehledného QR kódu na obrazovce.
-- Možnost **stáhnout QR kód jako obrázek (PNG)** do mobilu.
-- Tlačítko **uložit do kalendáře (.ics)** s přesným názvem a místem akce.
-- Konfetová animace (`canvas-confetti`).
-
-### 5. Odbavovací terminál u vstupu (`/checkin`)
-- **Chráněná zóna:** Přístup pouze pro organizátory po zadání hesla (zabezpečeno přes podepsanou session cookie via `jose`).
-- **Kamerový skener:** Bleskové čtení QR kódů přímo v prohlížeči (`html5-qrcode`) s přepínáním přední/zadní kamery na mobilu.
-- **Okamžitá zvuková a vizuální odezva (Web Audio API):**
-  - 🟢 **ZELENÁ (Úspěch):** *"Platná registrace: [Jméno Příjmení], vítejte! Můžou jít."* + harmonický tón (změna na stav `ATTENDED`).
-  - 🔴 **ČERVENÁ (Varování):** *"POZOR: Již uplatněno! Odbaveno v [čas]."* + varovný signál.
-  - 🟠 **ORANŽOVÁ/ŽLUTÁ (Jiná akce):** *"POZOR: Kód pro jinou událost!"* + varovný signál a možnost rychlého přepnutí.
-  - 🟡 **ŠEDÁ/ŽLUTÁ (Chyba):** *"Nenalezeno / Neplatný kód."* + hluboký tón.
-- **Záložní ruční odbavení:** Vyhledávání podle jména, e-mailu nebo ID pro případ vybitého telefonu.
-- **Statistika v reálném čase:** Celkem registrováno, odbaveno, zbývá dorazit a míra účasti pro vybranou akci i celkově.
-- **Stornování:** Možnost vrátit / stornovat omylem odbaveného účastníka.
+### Theme & Contrast Architecture
+- **Semantic Color Tokens:** Supports light and dark modes through CSS custom properties without relying on static mode overrides.
+- **Optical Ticket Isolation:** QR code tickets and physical print passes are strictly isolated to high-contrast light backgrounds for reliable hardware scanning.
 
 ---
 
-## 🛠 Technický stack
+## Tech Stack
 
-- **Framework:** Next.js 16 (App Router, Server Actions, TypeScript)
-- **Komponenty & Styling:** shadcn/ui architektura (`Button`, `Card`, `Badge`, `Input`, `Alert`), Tailwind CSS v4 + Lucide React ikony
-- **Linter & Formatter:** Biome (`@biomejs/biome`)
-- **Formuláře & validace:** `react-hook-form`, `@hookform/resolvers`, `zod`
-- **Databáze & ORM:** Prisma ORM (`@prisma/client`, `prisma`) s PostgreSQL (Vercel Postgres / Neon)
-  - Obsahuje automatický in-memory fallback pro vývoj bez připojené lokální databáze.
-- **E-maily:** Resend SDK (`resend`) + `@react-email/components`
-- **Generování QR kódů:** `qrcode`
-- **Skenování QR kódů:** `html5-qrcode`
-- **Autentizace:** Bezpečná cookie session podepsaná přes `jose`
-- **Zvukové efekty:** Web Audio API (prostorová syntéza bez externích zvukových souborů)
+| Layer | Technology |
+|---|---|
+| Framework | Next.js (App Router, Server Actions, Partial Prerendering) |
+| Language | TypeScript |
+| Styling | Tailwind CSS, Lucide React icons, Radix UI primitives |
+| Database & ORM | PostgreSQL, Prisma ORM (with in-memory offline fallback) |
+| Email Service | Resend SDK, React Email (`@react-email/components`) |
+| QR Code Engine | `qrcode` (generation), `html5-qrcode` (camera scanning) |
+| Security | `jose` (JWT cookie sessions) |
+| Linter & Formatter | Biome (`@biomejs/biome`) |
 
 ---
 
-## 📋 Konfigurace prostředí (`.env`)
+## Project Structure
 
-Vytvořte soubor `.env` (vycházejte z `.env.example`):
-
-```bash
-# Databáze: Vercel Postgres / Neon connection string
-POSTGRES_PRISMA_URL="postgresql://user:password@host/dbname?sslmode=require"
-POSTGRES_URL_NON_POOLING="postgresql://user:password@host/dbname?sslmode=require"
-
-# Resend API pro e-maily (https://resend.com/api-keys)
-# V lokálním devu bez klíče se e-maily simulují a logují do konzole
-RESEND_API_KEY="re_123456789"
-EMAIL_FROM="Mládež DPV <onboarding@resend.dev>"
-
-# Heslo pro vstup do organizátorské zóny /checkin
-ADMIN_PASSWORD="silvestr-prostejov"
-
-# Tajný klíč pro podepisování session cookies (min. 32 znaků)
-AUTH_SECRET="dev-secret-key-for-silvestr-checkin-session-minimum-32-chars"
-
-# Veřejná URL aplikace
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+qr-entry/
+├── prisma/
+│   └── schema.prisma              # Database schema (Event and Registration models)
+├── public/
+│   ├── mdp-icon.png               # Organization icon asset
+│   └── mdp-logo.png               # Organization logo asset
+├── src/
+│   ├── app/
+│   │   ├── actions/               # Server Actions (auth, checkin, events, registration)
+│   │   ├── api/qr/[code]/         # Dynamic PNG QR code HTTP endpoint
+│   │   ├── checkin/               # Organizer admission terminal and event management modal
+│   │   ├── registrace/            # Public registration form and ticket pass pages
+│   │   ├── globals.css            # Global styles and semantic color token definitions
+│   │   ├── layout.tsx             # Root layout with theme initialization script
+│   │   └── page.tsx               # Public landing page with active event listings
+│   ├── components/
+│   │   ├── ui/                    # Reusable primitive UI components
+│   │   ├── Footer.tsx             # Public footer
+│   │   ├── Navbar.tsx             # Public header navigation
+│   │   └── ThemeToggle.tsx        # Light/dark mode toggle button
+│   ├── emails/
+│   │   └── TicketEmail.tsx        # React Email template for participant confirmation
+│   └── lib/
+│       ├── auth.ts                # Session token signing and verification
+│       ├── email.ts               # Resend email client with inline MIME attachments
+│       ├── prisma.ts              # Prisma database client singleton
+│       ├── qrcode.ts              # QR code generation (Data URL and Buffer)
+│       ├── registrations.ts       # Registration and event service layer
+│       ├── sounds.ts              # Web Audio API sound synthesis
+│       └── validations.ts         # Zod schemas for forms and check-in parameters
+├── .env.example                   # Environment configuration template
+├── biome.json                     # Biome linter and formatter configuration
+├── next.config.ts                 # Next.js configuration
+└── package.json                   # Dependencies and scripts
 ```
 
 ---
 
-## 💻 Lokální spuštění
+## Environment Variables
 
-1. **Instalace závislostí:**
+Copy `.env.example` to `.env` and configure the values:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Description | Default / Example |
+|---|---|---|
+| `POSTGRES_PRISMA_URL` | PostgreSQL connection string (pooling) | `postgresql://...` |
+| `POSTGRES_URL_NON_POOLING` | Direct PostgreSQL connection string | `postgresql://...` |
+| `RESEND_API_KEY` | Resend API key for outbound emails | `re_...` |
+| `EMAIL_FROM` | Sender display name and email address | `Event Team <onboarding@resend.dev>` |
+| `ADMIN_PASSWORD` | Password for accessing the `/checkin` terminal | `change-me-to-a-secure-password` |
+| `AUTH_SECRET` | Secret key for signing session tokens (min. 32 chars) | `your-secure-random-auth-secret` |
+| `NEXT_PUBLIC_APP_URL` | Public base URL of the deployment | `http://localhost:3000` |
+
+If no database connection string is provided during local development, the application automatically falls back to an in-memory repository to allow offline testing.
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js 20.x or later
+- pnpm 9.x or later
+
+### Installation
+
+1. Install dependencies:
    ```bash
    pnpm install
    ```
 
-2. **Generování Prisma klienta:**
+2. Generate the Prisma client:
    ```bash
    pnpm prisma generate
    ```
 
-3. **Kontrola kvality kódu (Biome):**
+3. Synchronize the database schema:
+   ```bash
+   pnpm prisma db push
+   ```
+
+4. Run the code quality checks:
    ```bash
    pnpm biome check
    ```
 
-4. **Spuštění vývojového serveru:**
+5. Start the development server:
    ```bash
    pnpm dev
    ```
 
-5. Otevřete [http://localhost:3000](http://localhost:3000) (veřejný web) nebo [http://localhost:3000/checkin](http://localhost:3000/checkin) (odbavovací terminál pro organizátory, výchozí heslo v `.env` je `silvestr-prostejov`).
+6. Open [http://localhost:3000](http://localhost:3000) for the public portal or [http://localhost:3000/checkin](http://localhost:3000/checkin) for the organizer check-in terminal.
 
 ---
 
-## 🚢 Nasazení na Vercel
+## Scripts
 
-1. Nahrajte projekt na GitHub.
-2. Vytvořte nový projekt na [Vercel](https://vercel.com).
-3. V záložce **Storage** přidejte **Vercel Postgres** nebo Neon. Proměnná `POSTGRES_PRISMA_URL` se propojí automaticky.
-4. Nastavte v **Environment Variables**:
-   - `ADMIN_PASSWORD` (heslo pro organizátory u vchodu)
-   - `AUTH_SECRET` (náhodný bezpečný řetězec min. 32 znaků)
-   - `RESEND_API_KEY` (váš API klíč z Resend)
-   - `EMAIL_FROM` (ověřená doména odesílatele)
-   - `NEXT_PUBLIC_APP_URL` (doména na Vercelu)
-5. Po prvním nasazení spusťte `pnpm prisma db push` pro aplikaci tabulek v databázi.
+- `pnpm dev`: Starts the Next.js development server.
+- `pnpm build`: Creates an optimized production build.
+- `pnpm start`: Starts the Next.js production server.
+- `pnpm lint`: Runs code quality checks using Biome.
+- `pnpm format`: Formats code files using Biome.
+
+---
+
+## Production Deployment (Vercel)
+
+1. Connect the repository to Vercel.
+2. Under **Storage**, provision a **Vercel Postgres** or **Neon** database instance. The connection strings (`POSTGRES_PRISMA_URL` and `POSTGRES_URL_NON_POOLING`) will be populated automatically.
+3. Configure the remaining environment variables in the project settings:
+   - `ADMIN_PASSWORD`
+   - `AUTH_SECRET`
+   - `RESEND_API_KEY`
+   - `EMAIL_FROM`
+   - `NEXT_PUBLIC_APP_URL` (set to your production domain)
+4. Trigger the deployment.
+5. Apply database migrations or run `pnpm prisma db push` against the production database.

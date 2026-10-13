@@ -3,7 +3,10 @@
 import { isOrganizerAuthenticated } from "@/lib/auth";
 import {
   createEvent,
+  deleteEvent,
+  deleteRegistration,
   getAllEvents,
+  getEventRegistrations,
   toggleEventActive,
 } from "@/lib/registrations";
 import { type EventFormData, eventFormSchema } from "@/lib/validations";
@@ -73,6 +76,65 @@ export async function toggleEventActiveAction(id: string) {
         error instanceof Error
           ? error.message
           : "Chyba při změně stavu události",
+    };
+  }
+}
+
+export async function deleteEventAction(id: string) {
+  const authenticated = await isOrganizerAuthenticated();
+  if (!authenticated) {
+    return { success: false, error: "Nejste přihlášeni jako organizátor" };
+  }
+
+  try {
+    await deleteEvent(id);
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Chyba při mazání události",
+    };
+  }
+}
+
+export async function getEventAttendeesAction(eventId?: string) {
+  const authenticated = await isOrganizerAuthenticated();
+  if (!authenticated) {
+    return {
+      success: false,
+      error: "Nejste přihlášeni jako organizátor",
+      attendees: [],
+    };
+  }
+
+  try {
+    const attendees = await getEventRegistrations(eventId);
+    return { success: true, attendees };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Chyba při načítání účastníků",
+      attendees: [],
+    };
+  }
+}
+
+export async function deleteAttendeeAction(id: string) {
+  const authenticated = await isOrganizerAuthenticated();
+  if (!authenticated) {
+    return { success: false, error: "Nejste přihlášeni jako organizátor" };
+  }
+
+  try {
+    await deleteRegistration(id);
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Chyba při mazání účastníka",
     };
   }
 }

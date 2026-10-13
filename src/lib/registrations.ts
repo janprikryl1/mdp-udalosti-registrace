@@ -256,6 +256,61 @@ export async function toggleEventActive(id: string): Promise<Event | null> {
   }
 }
 
+export async function deleteEvent(id: string): Promise<boolean> {
+  try {
+    await prisma.event.delete({ where: { id } });
+    return true;
+  } catch (error) {
+    if (isPrismaConnectionError(error)) {
+      memoryEvents.delete(id);
+      for (const [regId, reg] of memoryRegistrations.entries()) {
+        if (reg.eventId === id) {
+          memoryRegistrations.delete(regId);
+        }
+      }
+      return true;
+    }
+    throw error;
+  }
+}
+
+export async function getEventRegistrations(
+  eventId?: string,
+): Promise<(Registration & { event?: Event })[]> {
+  try {
+    return await prisma.registration.findMany({
+      where: eventId ? { eventId } : {},
+      orderBy: { createdAt: "desc" },
+      include: { event: true },
+    });
+  } catch (error) {
+    if (isPrismaConnectionError(error)) {
+      const list = Array.from(memoryRegistrations.values()).filter(
+        (r) => !eventId || r.eventId === eventId,
+      );
+      return list
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .map((r) => ({
+          ...r,
+          event: memoryEvents.get(r.eventId) || DEFAULT_EVENT,
+        }));
+    }
+    throw error;
+  }
+}
+
+export async function deleteRegistration(id: string): Promise<boolean> {
+  try {
+    await prisma.registration.delete({ where: { id } });
+    return true;
+  } catch (error) {
+    if (isPrismaConnectionError(error)) {
+      return memoryRegistrations.delete(id);
+    }
+    throw error;
+  }
+}
+
 export async function createOrGetRegistration(data: {
   eventId?: string;
   firstName: string;

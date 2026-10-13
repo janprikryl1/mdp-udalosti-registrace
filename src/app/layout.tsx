@@ -25,6 +25,10 @@ export const metadata: Metadata = {
     locale: "cs_CZ",
     type: "website",
   },
+  icons: {
+    icon: "/mdp-icon.png",
+    apple: "/mdp-icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -35,8 +39,16 @@ export default function RootLayout({
   return (
     <html
       lang="cs"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script>
+          {
+            '(function(){try{var t=localStorage.getItem("theme")||"dark";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();'
+          }
+        </script>
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans selection:bg-orange-600/30 selection:text-orange-200">
         <Navbar />
         <main className="flex-1">{children}</main>

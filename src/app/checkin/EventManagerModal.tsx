@@ -1,21 +1,29 @@
 "use client";
 
+import type { Event, Registration } from "@prisma/client";
 import {
   Calendar,
   Check,
+  CheckCircle2,
+  Copy,
   ExternalLink,
   Loader2,
   MapPin,
   Plus,
   Power,
+  Search,
   Sparkles,
+  Trash2,
   Users,
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   createEventAction,
+  deleteAttendeeAction,
+  deleteEventAction,
+  getEventAttendeesAction,
   getEventsAction,
   toggleEventActiveAction,
 } from "@/app/actions/events";
@@ -33,6 +41,8 @@ interface EventManagerModalProps {
   selectedEventId: string;
   onSelectEvent: (eventId: string) => void;
   onEventsUpdated: (events: EventWithCounts[]) => void;
+  initialTab?: "list" | "create" | "attendees";
+  onCheckinAttendee?: (code: string) => void;
 }
 
 export function EventManagerModal({
@@ -42,12 +52,34 @@ export function EventManagerModal({
   selectedEventId,
   onSelectEvent,
   onEventsUpdated,
+  initialTab = "list",
+  onCheckinAttendee,
 }: EventManagerModalProps) {
-  const [activeTab, setActiveTab] = useState<"list" | "create">("list");
+  const [activeTab, setActiveTab] = useState<"list" | "create" | "attendees">(
+    initialTab,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
+  const [deletingAttendeeId, setDeletingAttendeeId] = useState<string | null>(
+    null,
+  );
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
+
+  // Attendees tab state
+  const [attendees, setAttendees] = useState<
+    (Registration & { event?: Event })[]
+  >([]);
+  const [isLoadingAttendees, setIsLoadingAttendees] = useState(false);
+  const [attendeeFilterEventId, setAttendeeFilterEventId] = useState<string>(
+    selectedEventId || "",
+  );
+  const [attendeeSearchQuery, setAttendeeSearchQuery] = useState("");
+  const [attendeeStatusFilter, setAttendeeStatusFilter] = useState<
+    "ALL" | "REGISTERED" | "ATTENDED"
+  >("ALL");
+  const [copiedAttendees, setCopiedAttendees] = useState(false);
 
   // Form fields
   const [title, setTitle] = useState("");
@@ -55,6 +87,30 @@ export function EventManagerModal({
   const [date, setDate] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
+
+  // Sync initial tab when opened
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(initialTab);
+      setAttendeeFilterEventId(selectedEventId || "");
+    }
+  }, [isOpen, initialTab, selectedEventId]);
+
+  // Load attendees when tab switches to 'attendees' or filter changes
+  useEffect(() => {
+    if (isOpen && activeTab === "attendees") {
+      setIsLoadingAttendees(true);
+      getEventAttendeesAction(attendeeFilterEventId || undefined)
+        .then((res) => {
+          if (res.success && res.attendees) {
+            setAttendees(res.attendees);
+          }
+        })
+        .finally(() => {
+          setIsLoadingAttendees(false);
+        });
+    }
+  }, [isOpen, activeTab, attendeeFilterEventId]);
 
   if (!isOpen) return null;
 
@@ -74,6 +130,49 @@ export function EventManagerModal({
       }
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const handleDeleteEvent = async (id: string, evTitle: string) => {
+    const confirmed = window.confirm(
+      `Opravdu chcete smazat událost "${evTitle}"?\n\nVšechny dosavadní registrace k této akci budou nenávratně odstraněny!`,
+    );
+    if (!confirmed) return;
+
+    setDeletingEventId(id);
+    try {
+      const res = await deleteEventAction(id);
+      if (res.success) {
+        if (selectedEventId === id) {
+          const remaining = events.filter((e) => e.id !== id);
+          onSelectEvent(remaining[0]?.id || "");
+        }
+        await refreshEventsList();
+      } else {
+        alert(res.error || "Nepodařilo se smazat událost");
+      }
+    } finally {
+      setDeletingEventId(null);
+    }
+  };
+
+  const handleDeleteAttendee = async (id: string, name: string) => {
+    const confirmed = window.confirm(
+      `Opravdu chcete odstranit registraci účastníka "${name}"?`,
+    );
+    if (!confirmed) return;
+
+    setDeletingAttendeeId(id);
+    try {
+      const res = await deleteAttendeeAction(id);
+      if (res.success) {
+        setAttendees((prev) => prev.filter((a) => a.id !== id));
+        await refreshEventsList();
+      } else {
+        alert(res.error || "Nepodařilo se smazat registraci");
+      }
+    } finally {
+      setDeletingAttendeeId(null);
     }
   };
 
@@ -122,18 +221,48 @@ export function EventManagerModal({
     }
   };
 
+  // Filter attendees
+  const filteredAttendees = attendees.filter((a) => {
+    if (attendeeStatusFilter !== "ALL" && a.status !== attendeeStatusFilter) {
+      return false;
+    }
+    if (attendeeSearchQuery.trim()) {
+      const q = attendeeSearchQuery.toLowerCase().trim();
+      const matchName = `${a.firstName} ${a.lastName}`
+        .toLowerCase()
+        .includes(q);
+      const matchEmail = a.email.toLowerCase().includes(q);
+      const matchCity = a.city.toLowerCase().includes(q);
+      const matchId = a.id.toLowerCase().includes(q);
+      return matchName || matchEmail || matchCity || matchId;
+    }
+    return true;
+  });
+
+  const exportAttendeesCsv = () => {
+    const rows = filteredAttendees.map(
+      (a) =>
+        `"${a.firstName} ${a.lastName}","${a.email}","${a.city}","${a.event?.title || ""}","${a.status === "ATTENDED" ? "Odbaven" : "Registrován"}","${a.attendedAt ? new Intl.DateTimeFormat("cs-CZ", { dateStyle: "short", timeStyle: "medium" }).format(new Date(a.attendedAt)) : ""}","${a.id}"`,
+    );
+    const header = `"Jméno a Příjmení","E-mail","Město","Událost","Stav","Čas odbavení","ID"`;
+    const csv = [header, ...rows].join("\n");
+    navigator.clipboard.writeText(csv);
+    setCopiedAttendees(true);
+    setTimeout(() => setCopiedAttendees(false), 2500);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="relative w-full max-w-3xl rounded-3xl bg-card shadow-2xl border border-border overflow-hidden my-8 text-card-foreground">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
+      <div className="relative w-full max-w-4xl rounded-3xl bg-card shadow-2xl border border-border overflow-hidden my-6 text-card-foreground">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-4 bg-muted/40">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4 bg-muted/40 sm:px-6">
           <div>
             <h2 className="text-xl font-extrabold text-foreground flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary" />
-              Správa událostí a akcí
+              Správa akcí a účastníků
             </h2>
             <p className="text-xs text-muted-foreground">
-              Vytvářej nové akce, přepínej aktivitu a kontroluj účast.
+              Vytvářej akce, kontroluj seznamy přihlášených a spravuj účastníky.
             </p>
           </div>
           <button
@@ -146,23 +275,37 @@ export function EventManagerModal({
         </div>
 
         {/* Tab navigation */}
-        <div className="flex border-b border-border px-6 pt-3 gap-3 bg-card">
+        <div className="flex border-b border-border px-5 pt-3 gap-2 sm:gap-3 bg-card sm:px-6 overflow-x-auto">
           <button
             type="button"
             onClick={() => setActiveTab("list")}
-            className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === "list"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Users className="h-4 w-4" />
+            <Calendar className="h-4 w-4" />
             <span>Přehled událostí ({events.length})</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("attendees")}
+            className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === "attendees"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Users className="h-4 w-4" />
+            <span>Seznam účastníků</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setActiveTab("create")}
-            className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === "create"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -173,8 +316,9 @@ export function EventManagerModal({
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 max-h-[70vh] overflow-y-auto">
+        {/* Tab Content */}
+        <div className="p-5 sm:p-6 max-h-[72vh] overflow-y-auto">
+          {/* TAB 1: LIST OF EVENTS */}
           {activeTab === "list" && (
             <div className="space-y-4">
               {events.length === 0 ? (
@@ -198,7 +342,7 @@ export function EventManagerModal({
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <h3 className="font-extrabold text-base text-foreground">
                               {ev.title}
                             </h3>
@@ -243,20 +387,28 @@ export function EventManagerModal({
                           )}
                         </div>
 
-                        {/* Counts Badge */}
+                        {/* Counts Badge & Attendees trigger */}
                         <div className="text-right">
-                          <div className="rounded-xl bg-muted px-3 py-1.5 text-xs font-semibold text-foreground">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAttendeeFilterEventId(ev.id);
+                              setActiveTab("attendees");
+                            }}
+                            className="rounded-xl bg-muted px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/80 transition-colors block cursor-pointer"
+                            title="Zobrazit účastníky této akce"
+                          >
                             <span className="text-emerald-400 font-extrabold">
                               {attended}
                             </span>{" "}
-                            / {total} odbaveno
-                          </div>
+                            / {total} odbaveno (zobrazit)
+                          </button>
                         </div>
                       </div>
 
                       {/* Action buttons */}
                       <div className="mt-4 pt-3 border-t border-border flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           {!isSelected && (
                             <Button
                               type="button"
@@ -270,6 +422,19 @@ export function EventManagerModal({
                               Skenovat tuto akci
                             </Button>
                           )}
+
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setAttendeeFilterEventId(ev.id);
+                              setActiveTab("attendees");
+                            }}
+                          >
+                            <Users className="h-3.5 w-3.5 mr-1" />
+                            <span>Účastníci ({total})</span>
+                          </Button>
 
                           <Button
                             type="button"
@@ -292,6 +457,23 @@ export function EventManagerModal({
                               {ev.isActive ? "Pozastavit" : "Aktivovat"}
                             </span>
                           </Button>
+
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteEvent(ev.id, ev.title)}
+                            disabled={deletingEventId === ev.id}
+                            className="hover:bg-destructive/20 hover:text-rose-400 text-muted-foreground"
+                            title="Smazat tuto událost"
+                          >
+                            {deletingEventId === ev.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3.5 w-3.5" />
+                            )}
+                            <span>Smazat</span>
+                          </Button>
                         </div>
 
                         <Link
@@ -310,6 +492,233 @@ export function EventManagerModal({
             </div>
           )}
 
+          {/* TAB 2: ATTENDEES LIST */}
+          {activeTab === "attendees" && (
+            <div className="space-y-4">
+              {/* Filter controls */}
+              <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-muted/40 border border-border">
+                <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-[260px]">
+                  {/* Event Filter */}
+                  <select
+                    value={attendeeFilterEventId}
+                    onChange={(e) => setAttendeeFilterEventId(e.target.value)}
+                    className="rounded-xl border border-input bg-card py-1.5 px-3 text-xs font-semibold text-foreground focus:border-ring focus:outline-hidden"
+                  >
+                    <option value="">-- Všechny akce --</option>
+                    {events.map((ev) => (
+                      <option key={ev.id} value={ev.id}>
+                        {ev.title} ({ev.totalCount ?? 0})
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Search query */}
+                  <div className="relative flex-1 min-w-[180px]">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Hledat jméno, e-mail, město..."
+                      value={attendeeSearchQuery}
+                      onChange={(e) => setAttendeeSearchQuery(e.target.value)}
+                      className="h-8 pl-8 text-xs"
+                    />
+                  </div>
+
+                  {/* Status filter */}
+                  <div className="flex items-center gap-1 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setAttendeeStatusFilter("ALL")}
+                      className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
+                        attendeeStatusFilter === "ALL"
+                          ? "bg-primary text-primary-foreground font-bold"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Všichni
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAttendeeStatusFilter("ATTENDED")}
+                      className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
+                        attendeeStatusFilter === "ATTENDED"
+                          ? "bg-emerald-600 text-white font-bold"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Odbaveni
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAttendeeStatusFilter("REGISTERED")}
+                      className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
+                        attendeeStatusFilter === "REGISTERED"
+                          ? "bg-muted text-foreground font-bold"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Čekající
+                    </button>
+                  </div>
+                </div>
+
+                {/* Export button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={exportAttendeesCsv}
+                  disabled={filteredAttendees.length === 0}
+                  className="whitespace-nowrap"
+                  title="Kopírovat seznam účastníků jako CSV text do schránky"
+                >
+                  {copiedAttendees ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 mr-1" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5 mr-1" />
+                  )}
+                  <span>
+                    {copiedAttendees ? "Zkopírováno!" : "Kopírovat CSV"}
+                  </span>
+                </Button>
+              </div>
+
+              {/* Status summary */}
+              <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+                <span>
+                  Nalezeno: <strong>{filteredAttendees.length}</strong>{" "}
+                  účastníků (
+                  {
+                    filteredAttendees.filter((a) => a.status === "ATTENDED")
+                      .length
+                  }{" "}
+                  odbaveno)
+                </span>
+                <span className="font-mono text-[11px]">
+                  Řazeno od nejnovějších
+                </span>
+              </div>
+
+              {/* Loading indicator */}
+              {isLoadingAttendees && (
+                <div className="flex items-center justify-center py-12 gap-2 text-muted-foreground text-sm">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <span>Načítám seznam účastníků...</span>
+                </div>
+              )}
+
+              {/* Attendees list */}
+              {!isLoadingAttendees && filteredAttendees.length === 0 && (
+                <div className="text-center py-12 rounded-2xl border border-dashed border-border bg-muted/20">
+                  <Users className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-semibold text-foreground">
+                    Žádní účastníci neodpovídají zadanému filtru.
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Zkuste změnit výběr akce nebo hledaný výraz.
+                  </p>
+                </div>
+              )}
+
+              {!isLoadingAttendees && filteredAttendees.length > 0 && (
+                <div className="divide-y divide-border rounded-2xl border border-border bg-card overflow-hidden">
+                  {filteredAttendees.map((att) => (
+                    <div
+                      key={att.id}
+                      className="p-3.5 flex flex-wrap items-center justify-between gap-3 hover:bg-muted/30 transition-colors text-xs"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-sm text-foreground">
+                            {att.firstName} {att.lastName}
+                          </span>
+                          {att.status === "ATTENDED" ? (
+                            <Badge variant="success">Odbaven</Badge>
+                          ) : (
+                            <Badge variant="secondary">Čeká na příchod</Badge>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3 text-muted-foreground">
+                          <span>{att.email}</span>
+                          <span>•</span>
+                          <span>{att.city}</span>
+                          {att.event && !attendeeFilterEventId && (
+                            <>
+                              <span>•</span>
+                              <span className="text-primary font-medium">
+                                {att.event.title}
+                              </span>
+                            </>
+                          )}
+                          <span>•</span>
+                          <span className="font-mono text-[11px]">
+                            Reg:{" "}
+                            {new Intl.DateTimeFormat("cs-CZ", {
+                              dateStyle: "short",
+                              timeStyle: "short",
+                            }).format(new Date(att.createdAt))}
+                          </span>
+                          {att.attendedAt && (
+                            <>
+                              <span>•</span>
+                              <span className="text-emerald-400 font-medium">
+                                Vstup:{" "}
+                                {new Intl.DateTimeFormat("cs-CZ", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }).format(new Date(att.attendedAt))}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2">
+                        {att.status === "REGISTERED" && onCheckinAttendee && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="brand"
+                            onClick={() => {
+                              onCheckinAttendee(att.id);
+                              onClose();
+                            }}
+                          >
+                            Odbavit nyní
+                          </Button>
+                        )}
+
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() =>
+                            handleDeleteAttendee(
+                              att.id,
+                              `${att.firstName} ${att.lastName}`,
+                            )
+                          }
+                          disabled={deletingAttendeeId === att.id}
+                          className="hover:bg-destructive/20 hover:text-rose-400 text-muted-foreground"
+                          title="Smazat účastníka"
+                        >
+                          {deletingAttendeeId === att.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: CREATE EVENT */}
           {activeTab === "create" && (
             <form onSubmit={handleCreateSubmit} className="space-y-4">
               {formError && (

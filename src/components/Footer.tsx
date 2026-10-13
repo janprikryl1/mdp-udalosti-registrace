@@ -1,6 +1,7 @@
 "use client";
 
-import { Heart, ShieldCheck, Sparkles } from "lucide-react";
+import { ExternalLink, Heart, ShieldCheck } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export function Footer() {
@@ -10,9 +11,15 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {/* Brand info */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2 font-bold text-foreground">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600 text-white shadow-xs">
-                <Sparkles className="h-4 w-4" />
+            <div className="flex items-center gap-2.5 font-bold text-foreground">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/10 border border-orange-500/20 p-1">
+                <Image
+                  src="/mdp-icon.png"
+                  alt="MDP logo"
+                  width={28}
+                  height={28}
+                  className="h-full w-full object-contain"
+                />
               </div>
               <span>Církevní Silvestr</span>
             </div>
@@ -33,9 +40,10 @@ export function Footer() {
                   href="https://mladez.dpv.cz"
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-primary transition-colors"
+                  className="hover:text-primary transition-colors inline-flex items-center gap-1"
                 >
-                  Oficiální web: mladez.dpv.cz ↗
+                  <span>Oficiální web: mladez.dpv.cz</span>
+                  <ExternalLink className="h-3 w-3 opacity-70" />
                 </Link>
               </li>
               <li>
@@ -43,9 +51,10 @@ export function Footer() {
                   href="https://facebook.com/mladezprostejov"
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-primary transition-colors"
+                  className="hover:text-primary transition-colors inline-flex items-center gap-1"
                 >
-                  Facebook Mládež Prostějov ↗
+                  <span>Facebook Mládež Prostějov</span>
+                  <ExternalLink className="h-3 w-3 opacity-70" />
                 </Link>
               </li>
               <li>
@@ -53,9 +62,10 @@ export function Footer() {
                   href="https://instagram.com/mladezprostejov"
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-primary transition-colors"
+                  className="hover:text-primary transition-colors inline-flex items-center gap-1"
                 >
-                  Instagram @mladezprostejov ↗
+                  <span>Instagram @mladezprostejov</span>
+                  <ExternalLink className="h-3 w-3 opacity-70" />
                 </Link>
               </li>
               <li>
