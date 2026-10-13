@@ -76,6 +76,17 @@ export function Footer() {
                   Online registrace
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="https://sarkander.ado.cz/gdpr/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-primary transition-colors inline-flex items-center gap-1"
+                >
+                  <span>Zpracování osobních údajů (GDPR)</span>
+                  <ExternalLink className="h-3 w-3 opacity-70" />
+                </Link>
+              </li>
             </ul>
           </div>
 

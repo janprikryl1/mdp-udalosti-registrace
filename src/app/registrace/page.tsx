@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   Clock,
   Loader2,
+  Lock,
   QrCode,
   ShieldCheck,
   Sparkles,
@@ -92,18 +93,23 @@ async function RegistraceContent({
 
         {/* Reassurance pills */}
         <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1.5 font-medium">
             <Clock className="h-3.5 w-3.5 text-primary" />
             Zabere 30 sekund
           </span>
           <span>•</span>
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1.5 font-medium">
+            <Lock className="h-3.5 w-3.5 text-emerald-500" />
+            Šifrované zabezpečení (SSL)
+          </span>
+          <span>•</span>
+          <span className="flex items-center gap-1.5 font-medium">
             <ShieldCheck className="h-3.5 w-3.5 text-primary" />
             Osobní údaje nikde nešíříme
           </span>
           <span>•</span>
-          <span className="flex items-center gap-1">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
+          <span className="flex items-center gap-1.5 font-medium">
+            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
             Vstup 100% zdarma
           </span>
         </div>

@@ -153,6 +153,13 @@ export function TicketEmail({
               <Link href="https://mladez.dpv.cz" style={footerLink}>
                 mladez.dpv.cz
               </Link>
+              {" • "}
+              <Link
+                href="https://sarkander.ado.cz/gdpr/"
+                style={{ ...footerLink, color: "#94a3b8", fontSize: "11px" }}
+              >
+                Informace o GDPR
+              </Link>
             </Text>
           </Section>
         </Container>
