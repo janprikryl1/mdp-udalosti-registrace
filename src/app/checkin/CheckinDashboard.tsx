@@ -465,7 +465,7 @@ export function CheckinDashboard({
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full bg-gradient-to-r from-orange-500 to-emerald-500 transition-all duration-500"
+              className="h-full bg-gradient-to-r from-primary to-emerald-500 transition-all duration-500"
               style={{ width: `${attendancePercent}%` }}
             />
           </div>

@@ -26,7 +26,7 @@ interface TicketEmailProps {
 }
 
 export function TicketEmail({
-  eventName = "Církevní Silvestr",
+  eventName = "Církevní Silvestr 2026 – Malý princ",
   firstName = "Jan",
   lastName = "Novák",
   email = "jan.novak@example.cz",
@@ -48,7 +48,7 @@ export function TicketEmail({
     <Html lang="cs">
       <Head />
       <Preview>
-        {`Tvá vstupenka na ${eventName} v Prostějově (QR kód uvnitř)`}
+        {`Tvá vstupenka na ${eventName} v Brodku u Prostějova (QR kód uvnitř)`}
       </Preview>
       <Body style={main}>
         <Container style={container}>
@@ -65,101 +65,108 @@ export function TicketEmail({
               Ahoj <strong>{firstName}</strong>,
             </Text>
             <Text style={paragraph}>
-              tvá registrace na <strong>{eventName}</strong> byla úspěšně
-              přijata! Akce je zcela <strong>ZDARMA</strong> a díky této
-              registraci se vyhneš čekání ve frontě u vstupu.
+              tvá registrace na <strong>{eventName}</strong> v Brodku u
+              Prostějova byla úspěšně přijata! Vstupné je{" "}
+              <strong>dobrovolné</strong> a díky této registraci se vyhneš
+              čekání ve frontě u vstupu.
             </Text>
 
             {/* QR Card */}
             <Section style={qrCard}>
               <Text style={qrCardTitle}>TVŮJ OSOBNÍ QR KÓD PRO VSTUP</Text>
-              <Link
-                href={ticketUrl}
-                target="_blank"
-                style={{ display: "inline-block" }}
-              >
-                <Img
-                  src={resolvedQrSrc}
-                  alt="QR kód pro vstup"
-                  width="220"
-                  height="220"
-                  style={qrImage}
-                />
-              </Link>
+
+              {/* QR Image rendering */}
+              <Img
+                src={resolvedQrSrc}
+                width="220"
+                height="220"
+                alt="QR kód pro vstup"
+                style={qrImage}
+              />
+
               <Text style={qrInstruction}>
-                U vstupu stačí tento QR kód ukázat na displeji mobilu nebo
-                vytištěný.
+                Ukaž tento kód na displeji telefonu při vstupu do hasičárny.
               </Text>
+
               <Text style={qrNotice}>
-                Nezobrazuje se obrázek?{" "}
+                Pokud se obrázek výše nezobrazuje,{" "}
                 <Link href={ticketUrl} style={qrNoticeLink}>
-                  Klepni sem pro zobrazení vstupenky
+                  otevři si svou vstupenku v prohlížeči
                 </Link>
+                .
               </Text>
             </Section>
 
             {/* Registration Details */}
             <Section style={detailsBox}>
-              <Text style={detailsTitle}>Přehled registrace:</Text>
+              <Text style={detailsTitle}>Údaje o vstupence:</Text>
               <Text style={detailRow}>
-                <strong>Účastník:</strong> {firstName} {lastName}
+                <strong>Jméno:</strong> {firstName} {lastName}
               </Text>
               <Text style={detailRow}>
                 <strong>E-mail:</strong> {email}
               </Text>
               <Text style={detailRow}>
-                <strong>Bydliště / farnost:</strong> {city}
+                <strong>Bydliště / Farnost:</strong> {city}
+              </Text>
+              <Text style={detailRow}>
+                <strong>Kdy:</strong> Sobota 28. listopadu 2026 (od 18:00)
+              </Text>
+              <Text style={detailRow}>
+                <strong>Kde:</strong> Brodek u Prostějova (kostel & hasičárna)
               </Text>
               <Text style={detailRow}>
                 <strong>Kód registrace:</strong>{" "}
-                <span style={codeText}>{registrationId}</span>
+                <span style={codeText}>{registrationId.slice(0, 8)}...</span>
               </Text>
             </Section>
 
-            {/* Online Ticket Link */}
+            {/* Direct Ticket Link Button */}
             <Section style={buttonContainer}>
               <Link href={ticketUrl} style={button}>
-                Otevřít vstupenku v prohlížeči
+                Zobrazit a stáhnout vstupenku
               </Link>
             </Section>
 
             <Hr style={hr} />
 
-            {/* Info for participants */}
+            {/* Practical Info */}
             <Section style={infoSection}>
-              <Heading as="h3" style={infoHeading}>
-                Co tě čeká a co s sebou?
-              </Heading>
+              <Text style={infoHeading}>Důležité informace na cestu:</Text>
               <Text style={bulletPoint}>
-                • <strong>Program:</strong> Společenství mladých z celého
-                děkanátu, hry, kvízy, chvály, společná půlnoční adorace,
-                přípitek a oslava.
+                ⛪ <strong>Harmonogram:</strong> 18:00 mše svatá v kostele, od
+                19:30 ples v hasičárně.
               </Text>
               <Text style={bulletPoint}>
-                • <strong>S sebou:</strong> Přezůvky, dobrou náladu a pokud
-                můžeš, drobné slané či sladké občerstvení do společného stolu.
+                👞 <strong>Přezůvky & dress code:</strong> Doporučujeme plesové
+                oblečení a čisté přezůvky do sálu.
               </Text>
               <Text style={bulletPoint}>
-                • <strong>Vstupné:</strong> Zcela zdarma.
+                🎁 <strong>Tombola:</strong> Chcete-li přispět darem do tomboly,
+                napište nám na Instagram @mladezprostejov.
+              </Text>
+              <Text style={bulletPoint}>
+                🎂 <strong>Společný stůl:</strong> Můžeš přinést slané či sladké
+                dobroty na společný raut.
               </Text>
             </Section>
 
             <Hr style={hr} />
 
+            {/* Footer */}
             <Text style={footerNote}>
-              Těšíme se na tebe! <br />
-              <strong>Tým animátorů mládeže děkanátu Prostějov</strong>
+              Tento e-mail ti byl zaslán na základě tvé online registrace.
               <br />
-              <Link href="https://mladez.dpv.cz" style={footerLink}>
-                mladez.dpv.cz
-              </Link>
-              {" • "}
+              Pořádá <strong>Mládež děkanátu Prostějov</strong> &{" "}
+              <strong>Sarkander z. s.</strong>
+              <br />V případě dotazů nám napiš na{" "}
               <Link
-                href="https://sarkander.ado.cz/gdpr/"
-                style={{ ...footerLink, color: "#94a3b8", fontSize: "11px" }}
+                href="https://instagram.com/mladezprostejov"
+                style={footerLink}
               >
-                Informace o GDPR
+                Instagram @mladezprostejov
               </Link>
+              .
             </Text>
           </Section>
         </Container>
@@ -168,53 +175,51 @@ export function TicketEmail({
   );
 }
 
-export default TicketEmail;
-
-// Inline CSS Styles for robust email client rendering
 const main: React.CSSProperties = {
-  backgroundColor: "#fdf8f6",
+  backgroundColor: "#f5f3ef",
   fontFamily:
-    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
-  padding: "24px 0",
+    "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+  padding: "30px 10px",
 };
 
 const container: React.CSSProperties = {
   backgroundColor: "#ffffff",
   margin: "0 auto",
   maxWidth: "560px",
-  borderRadius: "16px",
+  borderRadius: "14px",
   overflow: "hidden",
-  border: "1px solid #fed7aa",
-  boxShadow: "0 4px 12px rgba(234, 88, 12, 0.08)",
+  border: "1px solid rgba(182, 130, 53, 0.3)",
+  boxShadow: "0 6px 20px rgba(29, 27, 26, 0.08)",
 };
 
 const headerSection: React.CSSProperties = {
-  backgroundColor: "#ea580c",
-  padding: "32px 24px 28px",
+  backgroundColor: "#1d1b1a",
+  padding: "34px 24px 30px",
   textAlign: "center" as const,
-  color: "#ffffff",
+  color: "#f8f4f4",
+  borderBottom: "2px solid #b68235",
 };
 
 const tagline: React.CSSProperties = {
   fontSize: "12px",
-  letterSpacing: "2px",
+  letterSpacing: "2.5px",
   textTransform: "uppercase" as const,
-  fontWeight: "bold",
-  color: "#ffedd5",
+  fontWeight: "600",
+  color: "#e1ad66",
   margin: "0 0 6px 0",
 };
 
 const heading: React.CSSProperties = {
-  fontSize: "28px",
-  fontWeight: "800",
+  fontSize: "26px",
+  fontWeight: "700",
   lineHeight: "1.2",
   margin: "0 0 8px 0",
-  color: "#ffffff",
+  color: "#f8f4f4",
 };
 
 const subtitle: React.CSSProperties = {
   fontSize: "14px",
-  color: "#ffedd5",
+  color: "#d7d3d3",
   margin: "0",
 };
 
@@ -224,20 +229,20 @@ const contentSection: React.CSSProperties = {
 
 const greetingText: React.CSSProperties = {
   fontSize: "18px",
-  color: "#1e293b",
+  color: "#201f1d",
   marginBottom: "12px",
 };
 
 const paragraph: React.CSSProperties = {
   fontSize: "15px",
   lineHeight: "1.6",
-  color: "#334155",
+  color: "#444141",
   margin: "0 0 20px 0",
 };
 
 const qrCard: React.CSSProperties = {
-  backgroundColor: "#fff7ed",
-  border: "2px dashed #f97316",
+  backgroundColor: "#faf8f5",
+  border: "1px solid #b68235",
   borderRadius: "12px",
   padding: "20px",
   textAlign: "center" as const,
@@ -245,44 +250,45 @@ const qrCard: React.CSSProperties = {
 };
 
 const qrCardTitle: React.CSSProperties = {
-  fontSize: "12px",
+  fontSize: "11px",
   fontWeight: "bold",
-  color: "#c2410c",
-  letterSpacing: "1px",
+  color: "#7d5411",
+  letterSpacing: "1.5px",
   margin: "0 0 12px 0",
+  textTransform: "uppercase" as const,
 };
 
 const qrImage: React.CSSProperties = {
   margin: "0 auto",
   display: "block",
   borderRadius: "8px",
-  border: "1px solid #fed7aa",
+  border: "1px solid rgba(182, 130, 53, 0.3)",
   backgroundColor: "#ffffff",
   padding: "8px",
 };
 
 const qrInstruction: React.CSSProperties = {
   fontSize: "13px",
-  color: "#7c2d12",
+  color: "#7d5411",
   margin: "12px 0 0 0",
-  fontWeight: "500",
+  fontWeight: "600",
 };
 
 const qrNotice: React.CSSProperties = {
   fontSize: "12px",
-  color: "#9a3412",
+  color: "#7d7979",
   margin: "10px 0 0 0",
 };
 
 const qrNoticeLink: React.CSSProperties = {
-  color: "#ea580c",
+  color: "#b68235",
   fontWeight: "bold",
   textDecoration: "underline",
 };
 
 const detailsBox: React.CSSProperties = {
-  backgroundColor: "#f8fafc",
-  border: "1px solid #e2e8f0",
+  backgroundColor: "#f8f7f5",
+  border: "1px solid rgba(182, 130, 53, 0.2)",
   borderRadius: "10px",
   padding: "16px",
   margin: "20px 0",
@@ -291,23 +297,23 @@ const detailsBox: React.CSSProperties = {
 const detailsTitle: React.CSSProperties = {
   fontSize: "14px",
   fontWeight: "bold",
-  color: "#0f172a",
+  color: "#201f1d",
   margin: "0 0 10px 0",
 };
 
 const detailRow: React.CSSProperties = {
   fontSize: "14px",
-  color: "#475569",
+  color: "#444141",
   margin: "4px 0",
 };
 
 const codeText: React.CSSProperties = {
   fontFamily: "monospace",
-  backgroundColor: "#e2e8f0",
+  backgroundColor: "#eae7e7",
   padding: "2px 6px",
   borderRadius: "4px",
   fontSize: "12px",
-  color: "#0f172a",
+  color: "#201f1d",
 };
 
 const buttonContainer: React.CSSProperties = {
@@ -316,10 +322,10 @@ const buttonContainer: React.CSSProperties = {
 };
 
 const button: React.CSSProperties = {
-  backgroundColor: "#ea580c",
-  color: "#ffffff",
-  padding: "12px 24px",
-  borderRadius: "9999px",
+  backgroundColor: "#b68235",
+  color: "#1d1b1a",
+  padding: "12px 26px",
+  borderRadius: "8px",
   fontSize: "15px",
   fontWeight: "bold",
   textDecoration: "none",
@@ -327,7 +333,7 @@ const button: React.CSSProperties = {
 };
 
 const hr: React.CSSProperties = {
-  borderColor: "#fed7aa",
+  borderColor: "rgba(182, 130, 53, 0.2)",
   margin: "24px 0",
 };
 
@@ -338,26 +344,26 @@ const infoSection: React.CSSProperties = {
 const infoHeading: React.CSSProperties = {
   fontSize: "16px",
   fontWeight: "bold",
-  color: "#1e293b",
+  color: "#201f1d",
   margin: "0 0 12px 0",
 };
 
 const bulletPoint: React.CSSProperties = {
   fontSize: "14px",
   lineHeight: "1.5",
-  color: "#475569",
+  color: "#444141",
   margin: "6px 0",
 };
 
 const footerNote: React.CSSProperties = {
-  fontSize: "13px",
-  color: "#64748b",
+  fontSize: "12px",
+  color: "#7d7979",
   textAlign: "center" as const,
   lineHeight: "1.6",
   margin: "0",
 };
 
 const footerLink: React.CSSProperties = {
-  color: "#ea580c",
+  color: "#b68235",
   textDecoration: "underline",
 };

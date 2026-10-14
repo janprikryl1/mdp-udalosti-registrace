@@ -1,12 +1,7 @@
 "use client";
 
-import {
-  AlertCircle,
-  KeyRound,
-  Loader2,
-  Lock,
-  ShieldCheck,
-} from "lucide-react";
+import { AlertCircle, KeyRound, Loader2, Lock } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { loginOrganizerAction } from "@/app/actions/auth";
@@ -47,10 +42,18 @@ export function LoginForm({ onLoginSuccess }: { onLoginSuccess?: () => void }) {
   };
 
   return (
-    <div className="mx-auto max-w-md px-4 py-12">
-      <Card className="p-6 sm:p-8 shadow-xl text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/25 mb-4">
-          <ShieldCheck className="h-7 w-7" />
+    <div className="mx-auto max-w-md px-4 py-12 font-body">
+      <Card className="relative p-6 sm:p-8 shadow-2xl border-primary/40 bg-card/80 text-center">
+        <div className="pointer-events-none absolute inset-2.5 rounded-lg border border-primary/20" />
+
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border border-primary/40 bg-primary/10 p-2 shadow-xs mb-3">
+          <Image
+            src="/images/silvestr/mdp-logo.png"
+            alt="Mládež děkanátu Prostějov"
+            width={40}
+            height={40}
+            className="h-full w-full object-contain"
+          />
         </div>
 
         <Badge
@@ -59,11 +62,12 @@ export function LoginForm({ onLoginSuccess }: { onLoginSuccess?: () => void }) {
         >
           Odbavení u vstupu
         </Badge>
-        <h1 className="text-2xl font-extrabold text-foreground">
+        <h1 className="font-heading text-2xl font-semibold text-foreground">
           Přihlášení organizátora
         </h1>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Tato sekce je určena pro obsluhu a animátory u vchodu na akce mládeže.
+        <p className="mt-1 text-xs text-muted-foreground">
+          Tato sekce je určena pro obsluhu a animátory u vchodu na ples
+          Církevního Silvestra.
         </p>
 
         {error && (
@@ -80,7 +84,7 @@ export function LoginForm({ onLoginSuccess }: { onLoginSuccess?: () => void }) {
           <div>
             <label
               htmlFor="organizer-password"
-              className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1.5"
+              className="block font-heading text-xs font-semibold uppercase tracking-wider text-foreground mb-1.5"
             >
               Heslo pro odbavení
             </label>
@@ -106,7 +110,7 @@ export function LoginForm({ onLoginSuccess }: { onLoginSuccess?: () => void }) {
             variant="brand"
             size="lg"
             disabled={isSubmitting}
-            className="w-full font-bold shadow-md shadow-orange-600/25"
+            className="w-full font-heading font-semibold uppercase tracking-wide shadow-md shadow-primary/25"
           >
             {isSubmitting ? (
               <>

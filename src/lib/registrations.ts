@@ -8,12 +8,12 @@ const memoryRegistrations = new Map<string, Registration>();
 const DEFAULT_EVENT_ID = "00000000-0000-0000-0000-000000000001";
 const DEFAULT_EVENT: Event = {
   id: DEFAULT_EVENT_ID,
-  slug: "cirkevni-silvestr-2025",
-  title: "Církevní Silvestr 2025",
+  slug: "cirkevni-silvestr-2026",
+  title: "Církevní Silvestr 2026 – Malý princ",
   description:
-    "Tradiční silvestrovské setkání a oslava mládeže děkanátu Prostějov",
+    "Plesové setkání a oslava přelomu církevního roku na téma Malý princ",
   date: new Date("2026-11-28T18:00:00Z"),
-  location: "Farní sál u Povýšení sv. Kříže, Prostějov",
+  location: "Brodek u Prostějova",
   isActive: true,
   createdAt: new Date(),
   updatedAt: new Date(),

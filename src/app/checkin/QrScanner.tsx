@@ -163,24 +163,24 @@ export function QrScanner({ onScan, isPaused }: QrScannerProps) {
   return (
     <div className="flex flex-col items-center">
       {/* Camera Viewport Frame */}
-      <div className="relative w-full max-w-sm aspect-square overflow-hidden rounded-3xl border-4 border-orange-500 bg-slate-900 shadow-xl">
+      <div className="relative w-full max-w-sm aspect-square overflow-hidden rounded-2xl border-4 border-primary bg-card shadow-xl">
         {/* HTML5 QR Container */}
         <div id={containerId} className="w-full h-full object-cover" />
 
         {/* Laser Scanning Animation overlay when active */}
         {isScanning && !isPaused && (
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center p-6">
-            <div className="relative h-60 w-60 rounded-2xl border-2 border-white/60">
+            <div className="relative h-60 w-60 rounded-xl border-2 border-white/60">
               {/* Corner markers */}
-              <div className="absolute top-0 left-0 h-6 w-6 border-t-4 border-l-4 border-orange-400 -mt-1 -ml-1 rounded-tl-sm" />
-              <div className="absolute top-0 right-0 h-6 w-6 border-t-4 border-r-4 border-orange-400 -mt-1 -mr-1 rounded-tr-sm" />
-              <div className="absolute bottom-0 left-0 h-6 w-6 border-b-4 border-l-4 border-orange-400 -mb-1 -ml-1 rounded-bl-sm" />
-              <div className="absolute bottom-0 right-0 h-6 w-6 border-b-4 border-r-4 border-orange-400 -mb-1 -mr-1 rounded-br-sm" />
+              <div className="absolute top-0 left-0 h-6 w-6 border-t-4 border-l-4 border-[#e1ad66] -mt-1 -ml-1 rounded-tl-sm" />
+              <div className="absolute top-0 right-0 h-6 w-6 border-t-4 border-r-4 border-[#e1ad66] -mt-1 -mr-1 rounded-tr-sm" />
+              <div className="absolute bottom-0 left-0 h-6 w-6 border-b-4 border-l-4 border-[#e1ad66] -mb-1 -ml-1 rounded-bl-sm" />
+              <div className="absolute bottom-0 right-0 h-6 w-6 border-b-4 border-r-4 border-[#e1ad66] -mb-1 -mr-1 rounded-br-sm" />
 
               {/* Laser line */}
-              <div className="absolute inset-x-2 top-1/2 h-0.5 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500 shadow-xs shadow-orange-400 animate-pulse" />
+              <div className="absolute inset-x-2 top-1/2 h-0.5 bg-gradient-to-r from-[#b68235] via-[#e1ad66] to-[#b68235] shadow-xs shadow-[#e1ad66] animate-pulse" />
             </div>
-            <p className="mt-3 rounded-full bg-black/60 px-3 py-1 text-[11px] font-semibold text-white/90 backdrop-blur-xs">
+            <p className="mt-3 rounded-full bg-black/70 px-3 py-1 text-[11px] font-semibold text-white/90 backdrop-blur-xs font-body">
               Namiřte kameru na QR kód účastníka
             </p>
           </div>
@@ -188,25 +188,27 @@ export function QrScanner({ onScan, isPaused }: QrScannerProps) {
 
         {/* Loading state */}
         {isInitializing && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-white gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
-            <p className="text-xs text-slate-300">Spouštím kameru...</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-card text-foreground gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-xs text-muted-foreground font-body">
+              Spouštím kameru...
+            </p>
           </div>
         )}
 
         {/* Error state */}
         {cameraError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/95 p-6 text-center text-white">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/95 p-6 text-center text-foreground font-body">
             <CameraOff className="h-10 w-10 text-rose-500 mb-2" />
             <h4 className="text-sm font-bold">Kamera není dostupná</h4>
-            <p className="mt-1 text-xs text-slate-400 leading-relaxed max-w-xs">
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed max-w-xs">
               Povolte prosím přístup ke kameře v prohlížeči, nebo použijte
               manuální zadání kódu/e-mailu níže.
             </p>
             <button
               type="button"
               onClick={restartScanner}
-              className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-orange-600 px-4 py-2 text-xs font-bold text-white hover:bg-orange-500"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               Zkusit znovu

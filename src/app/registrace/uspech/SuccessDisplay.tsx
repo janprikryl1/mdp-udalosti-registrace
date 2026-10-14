@@ -12,6 +12,7 @@ import {
   QrCode,
   Sparkles,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -42,19 +43,20 @@ export function SuccessDisplay({
   qrDataUrl,
 }: SuccessDisplayProps) {
   const [copied, setCopied] = useState(false);
-  const eventTitle = registration.eventTitle || "Církevní Silvestr";
+  const eventTitle =
+    registration.eventTitle || "Církevní Silvestr 2026 – Malý princ";
 
   useEffect(() => {
-    // Fire confetti celebration on mount
+    // Fire gold & celebratory confetti
     try {
       confetti({
-        particleCount: 80,
-        spread: 70,
+        particleCount: 90,
+        spread: 80,
         origin: { y: 0.6 },
-        colors: ["#ea580c", "#f59e0b", "#ec4899", "#10b981"],
+        colors: ["#b68235", "#e1ad66", "#f8f4f4", "#c28d41", "#7d5411"],
       });
     } catch {
-      // Ignore if canvas-confetti fails in some environments
+      // Ignore if confetti fails in headless env
     }
   }, []);
 
@@ -76,21 +78,21 @@ export function SuccessDisplay({
     }
   };
 
-  // Generate .ics calendar file for the event
+  // Generate .ics calendar file for Brodek u Prostějova
   const downloadCalendarFile = () => {
     const loc =
-      registration.eventLocation || "Farní sál u Povýšení sv. Kříže, Prostějov";
+      registration.eventLocation || "Brodek u Prostějova (kostel & hasičárna)";
     const icsContent = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Mladez DPV//Vstupenky//CS",
+      "PRODID:-//Mladez DPV//Vstupenky//CS2026",
       "BEGIN:VEVENT",
-      `UID:akce-${registration.id}@dpv.cz`,
+      `UID:silvestr-2026-${registration.id}@dpv.cz`,
       `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").split(".")[0]}Z`,
       "DTSTART:20261128T170000Z",
       "DTEND:20261129T020000Z",
-      `SUMMARY:${eventTitle}`,
-      `DESCRIPTION:Vstupenka na ${eventTitle} (Mládež DPV). Vstup s QR kódem.`,
+      `SUMMARY:Církevní Silvestr 2026 – Malý princ`,
+      `DESCRIPTION:Plesový Církevní Silvestr mládeže děkanátu Prostějov na téma Malý princ. Vstup s QR kódem.`,
       `LOCATION:${loc.replace(/,/g, "\\,")}`,
       "STATUS:CONFIRMED",
       "END:VEVENT",
@@ -103,7 +105,7 @@ export function SuccessDisplay({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `vstupenka-${registration.firstName.toLowerCase()}.ics`;
+    a.download = `cirkevni-silvestr-2026-${registration.firstName.toLowerCase()}.ics`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -111,106 +113,144 @@ export function SuccessDisplay({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-body">
       {/* Top Banner */}
-      <Card className="border-emerald-500/25 bg-emerald-950/20 p-6 sm:p-8 text-center shadow-xs">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-600/30">
-          <CheckCircle2 className="h-9 w-9" />
+      <Card className="border-primary/40 bg-card/70 p-6 sm:p-8 text-center shadow-lg">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border border-primary/50 bg-primary/15 text-primary shadow-xs">
+          <CheckCircle2 className="h-8 w-8" />
         </div>
         <div className="mt-4">
-          <Badge variant="success" className="gap-1.5 px-3 py-1 font-semibold">
+          <Badge variant="brand" className="gap-1.5 px-3 py-1">
             <Sparkles className="h-3 w-3" />
             <span>Registrace úspěšně potvrzena</span>
           </Badge>
         </div>
-        <h1 className="mt-2 text-2xl sm:text-3xl font-extrabold text-foreground">
+        <h1 className="mt-2 font-heading text-2xl sm:text-3xl font-semibold text-foreground">
           Těšíme se na tebe, {registration.firstName}!
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground max-w-md mx-auto">
-          Tvá registrace na <strong>{eventTitle}</strong> byla úspěšně uložena.
-          Zde je tvůj vstupní QR kód.
+        <p className="mt-1 text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
+          Tvá registrace na <strong>{eventTitle}</strong> v Brodku u Prostějova
+          je platná. Zde je tvůj osobní vstupní QR průkaz.
         </p>
       </Card>
 
-      {/* Main Ticket Card - STRICTLY LIGHT PASS FOR MAXIMUM SCANNER CONTRAST AND PRINTING */}
-      <div className="ticket-light mx-auto max-w-md rounded-3xl border-2 border-orange-200 bg-white p-6 sm:p-8 shadow-2xl text-center text-slate-900">
-        <span className="inline-flex items-center rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-800 uppercase tracking-widest border border-orange-200">
-          Vstupní průkaz
-        </span>
-        <h2 className="mt-2 text-2xl font-black text-slate-900">
+      {/* Main Ticket Card — Classical Ball Invitation Ticket */}
+      <div className="relative mx-auto max-w-md rounded-2xl border border-primary/50 bg-card/90 p-6 sm:p-8 shadow-2xl text-center">
+        {/* Inner hairline border */}
+        <div className="pointer-events-none absolute inset-2.5 sm:inset-3 rounded-xl border border-primary/25" />
+
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <Image
+            src="/images/silvestr/mdp-logo.png"
+            alt="Mládež děkanátu Prostějov"
+            width={28}
+            height={28}
+            className="h-7 w-auto object-contain"
+          />
+          <span className="font-body text-[11px] tracking-[0.2em] uppercase text-primary font-semibold">
+            Mládež děkanátu Prostějov
+          </span>
+        </div>
+
+        <div className="font-heading uppercase tracking-wider text-sm text-foreground/80">
+          Vstupní průkaz · Plesová vstupenka
+        </div>
+
+        <h2 className="mt-2 font-heading text-3xl sm:text-4xl font-semibold text-foreground">
           {registration.firstName} {registration.lastName}
         </h2>
-        <p className="text-xs text-slate-600 flex items-center justify-center gap-1 mt-1 font-medium">
-          <MapPin className="h-3.5 w-3.5 text-orange-600" />
-          <span>{registration.city}</span>
+        <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5 mt-1 font-body">
+          <MapPin className="h-3.5 w-3.5 text-primary" />
+          <span>
+            Farnost / bydliště:{" "}
+            <strong className="text-foreground">{registration.city}</strong>
+          </span>
         </p>
 
-        {/* QR Code Graphic Box - Always Pure White & Cream */}
-        <div className="relative mx-auto mt-6 max-w-xs rounded-2xl border-2 border-dashed border-orange-300 bg-orange-50/70 p-6 shadow-inner">
+        {/* Diamond separator */}
+        <div className="diamond-separator my-4">
+          <div className="diamond-dot" />
+        </div>
+
+        {/* Event Details on Pass */}
+        <div className="font-body text-xs text-muted-foreground space-y-0.5">
+          <p className="font-heading text-lg font-medium text-foreground">
+            Církevní Silvestr 2026 · Malý princ
+          </p>
+          <p className="lining-nums">
+            Sobota 28. listopadu 2026 · Brodek u Prostějova
+          </p>
+          <p className="text-primary font-semibold">
+            18:00 mše svatá v kostele · 19:30 ples v hasičárně
+          </p>
+        </div>
+
+        {/* QR Code Graphic Box - Clean high-contrast container for scanning */}
+        <div className="relative mx-auto mt-5 max-w-xs rounded-xl border border-primary/40 bg-white p-5 shadow-inner">
           {qrDataUrl ? (
             // biome-ignore lint/performance/noImgElement: Data URL for generated QR code
             <img
               src={qrDataUrl}
-              alt="QR kód pro vstup"
-              className="mx-auto h-56 w-56 rounded-xl bg-white p-3 shadow-md border border-orange-200"
+              alt="QR kód pro vstup na ples"
+              className="mx-auto h-52 w-52 rounded-lg bg-white p-1"
             />
           ) : (
-            <div className="flex h-56 w-56 items-center justify-center rounded-xl bg-white font-mono text-xs text-slate-400">
+            <div className="flex h-52 w-52 items-center justify-center rounded-lg bg-white font-mono text-xs text-slate-500">
               Načítání QR kódu...
             </div>
           )}
 
-          <div className="mt-3 flex items-center justify-center gap-1 text-[11px] font-bold text-orange-900">
-            <QrCode className="h-3.5 w-3.5 text-orange-600" />
+          <div className="mt-2.5 flex items-center justify-center gap-1 text-[11px] font-semibold text-slate-700">
+            <QrCode className="h-3.5 w-3.5 text-primary" />
             <span>
               Kód:{" "}
-              <span className="font-mono">
+              <span className="font-mono text-slate-900">
                 {registration.id.slice(0, 8)}...
               </span>
             </span>
           </div>
         </div>
 
-        <p className="mt-4 text-xs font-semibold text-slate-600 max-w-sm mx-auto">
+        <p className="mt-4 text-xs text-muted-foreground max-w-sm mx-auto font-body">
           <strong>Tip pro rychlý vstup:</strong> Ulož si tento QR kód do fotek v
           mobilu nebo měj připravený displej u vchodu.
         </p>
 
-        {/* Action Buttons inside light ticket */}
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+        {/* Action Buttons */}
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 font-body">
           <Button
             type="button"
             variant="brand"
-            size="default"
+            size="sm"
             onClick={downloadQrCode}
-            className="w-full sm:w-auto font-bold"
+            className="w-full sm:w-auto font-semibold text-xs"
           >
             <Download className="h-4 w-4" />
-            <span>Stáhnout QR kód (obrázek)</span>
+            <span>Stáhnout QR kód</span>
           </Button>
 
           <Button
             type="button"
             variant="outline"
-            size="default"
+            size="sm"
             onClick={downloadCalendarFile}
-            className="w-full sm:w-auto border-orange-200 bg-white text-slate-800 hover:bg-orange-50 font-semibold"
+            className="w-full sm:w-auto text-xs"
           >
-            <Calendar className="h-4 w-4 text-orange-600" />
+            <Calendar className="h-4 w-4 text-primary" />
             <span>Uložit do kalendáře</span>
           </Button>
 
           <Button
             type="button"
             variant="outline"
-            size="default"
+            size="sm"
             onClick={copyLink}
-            className="w-full sm:w-auto border-slate-200 bg-white text-slate-800 hover:bg-slate-50 font-semibold"
+            className="w-full sm:w-auto text-xs"
           >
             {copied ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <CheckCircle2 className="h-4 w-4 text-primary" />
             ) : (
-              <Copy className="h-4 w-4 text-slate-500" />
+              <Copy className="h-4 w-4 text-muted-foreground" />
             )}
             <span>{copied ? "Zkopírováno!" : "Kopírovat odkaz"}</span>
           </Button>
@@ -218,8 +258,8 @@ export function SuccessDisplay({
       </div>
 
       {/* Info Card */}
-      <Card className="p-5 shadow-2xs space-y-3">
-        <h3 className="font-bold text-foreground text-sm flex items-center gap-2">
+      <Card className="p-5 border-primary/25 bg-card/60 space-y-2.5">
+        <h3 className="font-heading font-semibold text-foreground text-base flex items-center gap-2">
           <Mail className="h-4 w-4 text-primary" />
           Potvrzení odesláno na e-mail
         </h3>
@@ -230,7 +270,7 @@ export function SuccessDisplay({
         </p>
         <p className="text-xs text-muted-foreground">
           Kdyby se ti u vchodu vybil telefon, žádný strach – organizátoři tě
-          snadno dohledají v databázi podle jména a příjmení.
+          snadno dohledají v databázi podle tvého jména a příjmení.
         </p>
       </Card>
 
@@ -242,7 +282,7 @@ export function SuccessDisplay({
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Zpět na hlavní stránku</span>
+            <span>Zpět na program a pozvánku</span>
           </Link>
         </Button>
       </div>

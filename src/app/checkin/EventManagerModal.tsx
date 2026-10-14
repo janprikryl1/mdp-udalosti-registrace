@@ -479,7 +479,7 @@ export function EventManagerModal({
                         <Link
                           href={`/registrace?event=${encodeURIComponent(ev.slug)}`}
                           target="_blank"
-                          className="inline-flex items-center gap-1 text-xs font-medium text-orange-400 hover:text-orange-300"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-accent"
                         >
                           <span>Veřejná registrace</span>
                           <ExternalLink className="h-3 w-3" />

@@ -1,48 +1,63 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap");
 @import "tailwindcss";
 
 :root,
 [data-theme="dark"] {
-  --background: #090d16;
-  --foreground: #f8fafc;
-  --card: #111827;
-  --card-foreground: #f8fafc;
-  --popover: #111827;
-  --popover-foreground: #f8fafc;
-  --primary: #ea580c;
-  --primary-foreground: #ffffff;
-  --secondary: #1e293b;
-  --secondary-foreground: #f1f5f9;
-  --muted: #172033;
-  --muted-foreground: #94a3b8;
-  --accent: #222f47;
-  --accent-foreground: #f8fafc;
-  --destructive: #e11d48;
+  --background: #1d1b1a;
+  --foreground: #f8f4f4;
+  --card: #252220;
+  --card-foreground: #f8f4f4;
+  --popover: #252220;
+  --popover-foreground: #f8f4f4;
+  --primary: #b68235;
+  --primary-foreground: #1d1b1a;
+  --secondary: #2f2a27;
+  --secondary-foreground: #eae7e7;
+  --muted: #2a2522;
+  --muted-foreground: #aba49c;
+  --accent: #e1ad66;
+  --accent-foreground: #1d1b1a;
+  --destructive: #b93838;
   --destructive-foreground: #ffffff;
-  --border: #1f293d;
-  --input: #1f293d;
-  --ring: #f97316;
+  --border: rgba(182, 130, 53, 0.32);
+  --input: rgba(182, 130, 53, 0.28);
+  --ring: #e1ad66;
+
+  /* Gold tokens */
+  --gold-400: #e1ad66;
+  --gold-500: #c28d41;
+  --gold-primary: #b68235;
+  --gold-700: #7d5411;
+  --gold-subtle: rgba(182, 130, 53, 0.18);
 }
 
 [data-theme="light"] {
-  --background: #fffaf6;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #ea580c;
+  --background: #f3f2f2;
+  --foreground: #201f1d;
+  --card: #eae9e9;
+  --card-foreground: #201f1d;
+  --popover: #eae9e9;
+  --popover-foreground: #201f1d;
+  --primary: #b68235;
   --primary-foreground: #ffffff;
-  --secondary: #ffedd5;
-  --secondary-foreground: #7c2d12;
-  --muted: #fef3e9;
-  --muted-foreground: #64748b;
-  --accent: #fed7aa;
-  --accent-foreground: #9a3412;
-  --destructive: #e11d48;
+  --secondary: #e2dfdc;
+  --secondary-foreground: #201f1d;
+  --muted: #dfdbd8;
+  --muted-foreground: #6c6660;
+  --accent: #b68235;
+  --accent-foreground: #ffffff;
+  --destructive: #b93838;
   --destructive-foreground: #ffffff;
-  --border: #fed7aa;
-  --input: #e2e8f0;
-  --ring: #ea580c;
+  --border: rgba(32, 31, 29, 0.18);
+  --input: rgba(32, 31, 29, 0.22);
+  --ring: #b68235;
+
+  /* Gold tokens */
+  --gold-400: #c28d41;
+  --gold-500: #b68235;
+  --gold-primary: #b68235;
+  --gold-700: #7d5411;
+  --gold-subtle: rgba(182, 130, 53, 0.12);
 }
 
 @theme inline {
@@ -65,28 +80,90 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-heading: "Cormorant Garamond", "EB Garamond", Georgia, serif;
+  --font-body: "Lora", Garamond, Georgia, serif;
+  --font-sans: "Lora", Garamond, Georgia, serif;
 }
 
 /* Strictly light ticket pass scoped container for QR code scanning & printing */
 .ticket-light {
-  --background: #ffffff;
-  --foreground: #0f172a;
+  --background: #fbf9f6;
+  --foreground: #201f1d;
   --card: #ffffff;
-  --card-foreground: #0f172a;
-  --border: #fed7aa;
-  --muted: #fff7ed;
-  --muted-foreground: #475569;
-  background-color: #ffffff;
-  color: #0f172a;
+  --card-foreground: #201f1d;
+  --border: rgba(182, 130, 53, 0.35);
+  --muted: #f4f0ea;
+  --muted-foreground: #66615b;
+  background-color: #fbf9f6;
+  color: #201f1d;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: "Lora", Garamond, Georgia, serif;
   transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Cormorant Garamond", "EB Garamond", Georgia, serif;
+  letter-spacing: -0.01em;
+}
+
+/* Classical ball invitation double frame */
+.frame-classical {
+  position: relative;
+  border: 1px solid var(--primary);
+}
+
+.frame-classical::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  pointer-events: none;
+}
+
+/* Classical diamond divider */
+.diamond-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.diamond-separator::before,
+.diamond-separator::after {
+  content: "";
+  width: 70px;
+  height: 1px;
+  background: var(--primary);
+  opacity: 0.8;
+}
+
+.diamond-separator .diamond-dot {
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+  border: 1px solid var(--primary);
+  background: transparent;
+}
+
+/* Gold glow */
+.gold-glow {
+  box-shadow: 0 0 35px -5px rgba(182, 130, 53, 0.25);
+}
+
+/* Vignette circle */
+.vignette-circle {
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 70%, #3a2f22 0%, #1d1b1a 70%);
 }
