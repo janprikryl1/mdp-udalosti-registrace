@@ -218,12 +218,12 @@ export function QrScanner({ onScan, isPaused }: QrScannerProps) {
       </div>
 
       {/* Camera Controls Bar */}
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+      <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-2 w-full">
         {cameras.length > 1 && (
           <select
             value={selectedCameraId}
             onChange={(e) => setSelectedCameraId(e.target.value)}
-            className="rounded-xl border border-input bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-2xs focus:border-ring focus:outline-hidden"
+            className="w-full sm:w-auto max-w-xs rounded-xl border border-input bg-card px-3 py-2 sm:py-1.5 text-xs font-semibold text-foreground shadow-2xs focus:border-ring focus:outline-hidden text-center sm:text-left"
           >
             {cameras.map((c, i) => (
               <option key={c.id} value={c.id}>
@@ -233,27 +233,28 @@ export function QrScanner({ onScan, isPaused }: QrScannerProps) {
           </select>
         )}
 
-        <button
-          type="button"
-          onClick={toggleFacingMode}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-2xs hover:bg-muted transition-colors"
-        >
-          <FlipHorizontal className="h-3.5 w-3.5 text-primary" />
-          <span>
-            Přepnout kameru ({facingMode === "environment" ? "zadní" : "přední"}
-            )
-          </span>
-        </button>
+        <div className="flex items-center justify-center gap-2 w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={toggleFacingMode}
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 sm:py-1.5 text-xs font-semibold text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0"
+          >
+            <FlipHorizontal className="h-3.5 w-3.5 text-primary" />
+            <span>
+              Přepnout kameru ({facingMode === "environment" ? "zadní" : "přední"})
+            </span>
+          </button>
 
-        <button
-          type="button"
-          onClick={restartScanner}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-2xs hover:bg-muted transition-colors"
-          title="Restartovat snímač"
-        >
-          <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" />
-          <span>Obnovit</span>
-        </button>
+          <button
+            type="button"
+            onClick={restartScanner}
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 sm:py-1.5 text-xs font-semibold text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0"
+            title="Restartovat snímač"
+          >
+            <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" />
+            <span>Obnovit</span>
+          </button>
+        </div>
       </div>
     </div>
   );

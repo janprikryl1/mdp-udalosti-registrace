@@ -634,12 +634,12 @@ export default function HomePage() {
                 my vás nasměrujeme, kam dar předat.
               </p>
 
-              <div className="mt-5 inline-flex items-center gap-3 border border-primary/40 rounded-lg px-4 py-2 bg-primary/10">
-                <InstagramIcon className="h-5 w-5 text-primary" />
+              <div className="mt-5 inline-flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-3 border border-primary/40 rounded-lg px-3.5 py-2 bg-primary/10 max-w-full">
+                <InstagramIcon className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
                 <span className="font-body text-xs tracking-wider uppercase text-primary font-semibold">
                   Napište nám:
                 </span>
-                <span className="font-heading text-lg font-medium text-foreground">
+                <span className="font-heading text-base sm:text-lg font-medium text-foreground">
                   @mladezprostejov
                 </span>
               </div>
@@ -677,9 +677,9 @@ export default function HomePage() {
                 spoustu legrace v přátelské partě.
               </p>
 
-              <div className="mt-5 inline-flex items-center gap-3 border border-primary/40 rounded-lg px-4 py-2 bg-primary/10">
-                <HandHeart className="h-5 w-5 text-primary" />
-                <span className="font-heading text-lg font-medium text-foreground">
+              <div className="mt-5 inline-flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-3 border border-primary/40 rounded-lg px-3.5 py-2 bg-primary/10 max-w-full">
+                <HandHeart className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+                <span className="font-heading text-sm sm:text-lg font-medium text-foreground text-center md:text-left">
                   Napiš nám na Instagram @mladezprostejov
                 </span>
               </div>
@@ -804,12 +804,12 @@ export default function HomePage() {
         </div>
 
         <div className="mt-8 space-y-4">
-          <Card className="p-5 border-primary/25 bg-card/70">
-            <h3 className="flex items-center gap-2 font-heading text-xl font-semibold text-foreground">
-              <HelpCircle className="h-4 w-4 text-primary" />
-              Kolik stojí vstup na ples a oslavu?
+          <Card className="p-4 sm:p-5 border-primary/25 bg-card/70">
+            <h3 className="flex items-start gap-2.5 font-heading text-lg sm:text-xl font-semibold text-foreground leading-snug">
+              <HelpCircle className="h-4 w-4 text-primary shrink-0 mt-1" />
+              <span>Kolik stojí vstup na ples a oslavu?</span>
             </h3>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+            <p className="mt-2 text-xs sm:text-sm text-muted-foreground leading-relaxed pl-6.5">
               Vstup je pro všechny účastníky <strong>dobrovolný</strong>. Akci
               pořádá Mládež děkanátu Prostějov a Sarkander z. s. jako otevřené
               společenství. Pokud chceš přispět, můžeš vhodit příspěvek u vstupu
@@ -817,12 +817,12 @@ export default function HomePage() {
             </p>
           </Card>
 
-          <Card className="p-5 border-primary/25 bg-card/70">
-            <h3 className="flex items-center gap-2 font-heading text-xl font-semibold text-foreground">
-              <HelpCircle className="h-4 w-4 text-primary" />
-              Musím mít QR kód vytištěný na papíře?
+          <Card className="p-4 sm:p-5 border-primary/25 bg-card/70">
+            <h3 className="flex items-start gap-2.5 font-heading text-lg sm:text-xl font-semibold text-foreground leading-snug">
+              <HelpCircle className="h-4 w-4 text-primary shrink-0 mt-1" />
+              <span>Musím mít QR kód vytištěný na papíře?</span>
             </h3>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+            <p className="mt-2 text-xs sm:text-sm text-muted-foreground leading-relaxed pl-6.5">
               Vůbec ne! Stačí mít QR kód uložený v mobilu – buď v e-mailu, jako
               screenshot ve fotkách, nebo na potvrzovací stránce webu. Naše
               čtečka u vchodu do hasičárny jej bez problémů načte přímo z
@@ -830,12 +830,12 @@ export default function HomePage() {
             </p>
           </Card>
 
-          <Card className="p-5 border-primary/25 bg-card/70">
-            <h3 className="flex items-center gap-2 font-heading text-xl font-semibold text-foreground">
-              <HelpCircle className="h-4 w-4 text-primary" />
-              Co si mám vzít na sebe? (Dress code)
+          <Card className="p-4 sm:p-5 border-primary/25 bg-card/70">
+            <h3 className="flex items-start gap-2.5 font-heading text-lg sm:text-xl font-semibold text-foreground leading-snug">
+              <HelpCircle className="h-4 w-4 text-primary shrink-0 mt-1" />
+              <span>Co si mám vzít na sebe? (Dress code)</span>
             </h3>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+            <p className="mt-2 text-xs sm:text-sm text-muted-foreground leading-relaxed pl-6.5">
               Jelikož se jedná o plesové zahájení církevního roku na téma{" "}
               <em>Malý princ</em>, doporučujeme společenské / plesové oblečení
               (např. košile, oblek, šaty). Prosíme také o{" "}
@@ -844,12 +844,12 @@ export default function HomePage() {
             </p>
           </Card>
 
-          <Card className="p-5 border-primary/25 bg-card/70">
-            <h3 className="flex items-center gap-2 font-heading text-xl font-semibold text-foreground">
-              <HelpCircle className="h-4 w-4 text-primary" />
-              Můžu vzít s sebou kamarády, kteří nejsou věřící?
+          <Card className="p-4 sm:p-5 border-primary/25 bg-card/70">
+            <h3 className="flex items-start gap-2.5 font-heading text-lg sm:text-xl font-semibold text-foreground leading-snug">
+              <HelpCircle className="h-4 w-4 text-primary shrink-0 mt-1" />
+              <span>Můžu vzít s sebou kamarády, kteří nejsou věřící?</span>
             </h3>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+            <p className="mt-2 text-xs sm:text-sm text-muted-foreground leading-relaxed pl-6.5">
               Určitě ano! Jsme otevřené společenství pro všechny mladé lidi
               (doporučený věk 13–30 let), kteří hledají dobré přátele a skvělou
               zábavu. Stačí, když se každý kamarád zaregistruje zvlášť, aby měl
@@ -861,11 +861,11 @@ export default function HomePage() {
 
       {/* FINAL CTA BANNER (WITH FOX / MALÝ PRINC ILLUSTRATION) */}
       <section className="mx-auto max-w-5xl px-4 sm:px-6">
-        <div className="relative overflow-hidden rounded-2xl border border-primary/50 bg-gradient-to-b from-[#2a2420] to-[#1d1b1a] p-8 sm:p-12 text-center text-foreground shadow-2xl">
+        <div className="relative overflow-hidden rounded-2xl border border-primary/50 bg-gradient-to-b from-[#2a2420] to-[#1d1b1a] p-6 sm:p-12 text-center text-foreground shadow-2xl">
           {/* Subtle gold glow */}
           <div className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 h-40 w-96 rounded-full bg-primary/20 blur-3xl" />
 
-          <div className="mx-auto mb-4 w-28 h-28 relative">
+          <div className="mx-auto mb-4 w-24 h-24 sm:w-28 sm:h-28 relative">
             <Image
               src="/images/silvestr/maly-princ-liska.png"
               alt="Malý princ a liška"
@@ -875,27 +875,27 @@ export default function HomePage() {
             />
           </div>
 
-          <div className="font-body text-xs tracking-[0.2em] uppercase text-primary font-semibold">
+          <div className="font-body text-[11px] sm:text-xs tracking-[0.16em] sm:tracking-[0.2em] uppercase text-primary font-semibold">
             Sobota 28. listopadu 2026 · Brodek u Prostějova
           </div>
-          <h2 className="mt-2 font-heading text-3xl sm:text-5xl font-semibold tracking-normal text-foreground">
+          <h2 className="mt-2 font-heading text-2xl sm:text-5xl font-semibold tracking-normal text-foreground">
             Nenechávej to na poslední chvíli
           </h2>
-          <p className="mx-auto mt-3 max-w-xl font-body text-sm sm:text-base text-muted-foreground">
+          <p className="mx-auto mt-2 sm:mt-3 max-w-xl font-body text-xs sm:text-base text-muted-foreground leading-relaxed">
             Registrace zabere jen 30 vteřin. Ušetři si stání ve frontě a pojď si
             Církevní Silvestr užít na maximum!
           </p>
 
-          <div className="mt-8 flex justify-center">
+          <div className="mt-6 sm:mt-8 flex justify-center">
             <Button
               asChild
               variant="brand"
               size="xl"
-              className="font-heading uppercase tracking-wider text-sm px-10 shadow-lg"
+              className="w-full sm:w-auto font-heading uppercase tracking-wider text-xs sm:text-sm px-5 sm:px-10 shadow-lg text-center"
             >
-              <Link href="/registrace" className="group">
-                <span>Vyplnit rychlou registraci zdarma</span>
-                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1 ml-1" />
+              <Link href="/registrace" className="group flex items-center justify-center gap-1.5">
+                <span className="truncate">Vyplnit rychlou registraci zdarma</span>
+                <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 shrink-0 transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>
           </div>

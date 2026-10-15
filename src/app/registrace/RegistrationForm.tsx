@@ -5,13 +5,10 @@ import {
   AlertCircle,
   ArrowRight,
   Calendar,
-  CheckCircle2,
-  ExternalLink,
   Loader2,
   Lock,
   Mail,
   MapPin,
-  ShieldCheck,
   Sparkles,
   User,
 } from "lucide-react";
@@ -269,73 +266,6 @@ export function RegistrationForm({
         )}
       </div>
 
-      {/* Security & GDPR */}
-      <div className="rounded-xl border border-primary/25 bg-card/60 p-4 space-y-3.5">
-        <div className="flex items-center gap-2 text-foreground font-heading text-sm font-semibold tracking-wide uppercase">
-          <ShieldCheck className="h-4 w-4 text-primary" />
-          <span>Bezpečí a ochrana osobních údajů</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-muted-foreground">
-          <div className="flex items-start gap-2 rounded-lg border border-primary/20 bg-card/60 p-2.5">
-            <Lock className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-foreground">Šifrovaný přenos</p>
-              <p className="mt-0.5 leading-snug">
-                Data i QR kód jsou chráněny šifrováním SSL/TLS.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2 rounded-lg border border-primary/20 bg-card/60 p-2.5">
-            <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-foreground">
-                Pouze pro tuto akci
-              </p>
-              <p className="mt-0.5 leading-snug">
-                Žádný spam ani poskytování údajů třetím stranám.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2 rounded-lg border border-primary/20 bg-card/60 p-2.5">
-            <ShieldCheck className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-foreground">Omezený přístup</p>
-              <p className="mt-0.5 leading-snug">
-                K údajům má přístup pouze tým organizátorů u vstupu.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* GDPR Info */}
-        <div className="pt-2.5 border-t border-primary/20 text-[11px] leading-relaxed text-muted-foreground space-y-1.5">
-          <p className="font-heading font-semibold text-foreground text-xs uppercase tracking-wider">
-            Informace o zpracování osobních údajů (GDPR)
-          </p>
-          <p>
-            Informujeme Vás tímto, že Sarkander z.&nbsp;s., IČ: 60043920, se
-            sídlem Biskupské nám. 841/2, 779&nbsp;00 Olomouc, zpracovává osobní
-            údaje uvedené v této přihlášce v souvislosti s pořádáním akce v
-            pozici správce údajů.
-          </p>
-          <p>
-            Více informací naleznete na{" "}
-            <a
-              href="https://sarkander.ado.cz/gdpr/"
-              target="_blank"
-              rel="noreferrer"
-              className="font-semibold text-primary underline underline-offset-2 hover:text-primary/80 inline-flex items-center gap-0.5"
-            >
-              <span>sarkander.ado.cz/gdpr</span>
-              <ExternalLink className="h-3 w-3 inline" />
-            </a>
-            .
-          </p>
-        </div>
-      </div>
 
       {/* Submit Button */}
       <div className="pt-2">

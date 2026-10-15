@@ -32,7 +32,6 @@ import {
   searchRegistrationsAction,
   verifyAndCheckinAction,
 } from "@/app/actions/checkin";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -262,7 +261,7 @@ export function CheckinDashboard({
     stats.total > 0 ? Math.round((stats.attended / stats.total) * 100) : 0;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 space-y-6">
+    <div className="mx-auto max-w-4xl px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
       {/* EVENT MANAGEMENT MODAL */}
       <EventManagerModal
         isOpen={isEventModalOpen}
@@ -279,34 +278,50 @@ export function CheckinDashboard({
       />
 
       {/* TOP HEADER & CONTROLS */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="flex h-3 w-3 rounded-full bg-emerald-500 animate-ping" />
-            <h1 className="text-xl sm:text-2xl font-extrabold text-foreground">
-              Odbavovací terminál
-            </h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3 sm:pb-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping shrink-0" />
+              <h1 className="text-lg sm:text-2xl font-extrabold text-foreground tracking-tight">
+                Odbavovací terminál
+              </h1>
+            </div>
+            <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+              <span className="hidden sm:inline">Mládež děkanátu Prostějov</span>
+              <span className="hidden sm:inline">•</span>
+              <span className="font-semibold text-primary truncate max-w-[210px] sm:max-w-none">
+                {currentEvent ? currentEvent.title : "Všechny akce"}
+              </span>
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-            <span>Mládež děkanátu Prostějov</span>
-            <span>•</span>
-            <span className="font-semibold text-primary">
-              {currentEvent ? currentEvent.title : "Všechny akce"}
-            </span>
-          </p>
+
+          {/* Logout on mobile */}
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            onClick={handleLogout}
+            className="sm:hidden h-8 px-2.5 text-xs font-semibold shrink-0"
+            title="Odhlásit organizátora"
+          >
+            <LogOut className="h-3.5 w-3.5 mr-1" />
+            <span>Odhlásit</span>
+          </Button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Toolbar buttons */}
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-0.5 sm:pb-0">
           {/* Attendees List Trigger */}
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => openEventModal("attendees")}
-            className="font-semibold"
+            className="font-semibold h-8 sm:h-9 px-2.5 sm:px-3 text-xs sm:text-sm shrink-0"
             title="Zobrazit seznam zaregistrovaných účastníků"
           >
-            <Users className="h-4 w-4 text-primary" />
+            <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-1" />
             <span>Účastníci ({stats.total})</span>
           </Button>
 
@@ -316,15 +331,12 @@ export function CheckinDashboard({
             variant="outline"
             size="sm"
             onClick={() => openEventModal("list")}
-            className="font-semibold"
+            className="font-semibold h-8 sm:h-9 px-2.5 sm:px-3 text-xs sm:text-sm shrink-0"
             title="Spravovat a vytvářet události"
           >
-            <Layers className="h-4 w-4 text-primary" />
-            <span className="hidden sm:inline">Správa akcí</span>
+            <Layers className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-1" />
+            <span>Správa akcí</span>
           </Button>
-
-          {/* Theme Toggle */}
-          <ThemeToggle />
 
           {/* Sound Toggle */}
           <Button
@@ -332,14 +344,15 @@ export function CheckinDashboard({
             variant={soundEnabled ? "secondary" : "outline"}
             size="sm"
             onClick={() => setSoundEnabled(!soundEnabled)}
+            className="h-8 sm:h-9 px-2.5 text-xs shrink-0"
             title={soundEnabled ? "Zvuk je zapnutý" : "Zvuk je ztlumený"}
           >
             {soundEnabled ? (
-              <Volume2 className="h-4 w-4 text-emerald-500" />
+              <Volume2 className="h-3.5 w-3.5 text-emerald-500" />
             ) : (
-              <VolumeX className="h-4 w-4 text-muted-foreground" />
+              <VolumeX className="h-3.5 w-3.5 text-muted-foreground" />
             )}
-            <span className="hidden sm:inline">
+            <span className="hidden sm:inline ml-1">
               {soundEnabled ? "Zvuk ZAP" : "Zvuk VYP"}
             </span>
           </Button>
@@ -351,38 +364,40 @@ export function CheckinDashboard({
             size="sm"
             onClick={() => refreshStats(selectedEventId)}
             disabled={isRefreshingStats}
+            className="h-8 sm:h-9 px-2.5 text-xs shrink-0"
             title="Aktualizovat statistiky"
           >
             <RefreshCw
               className={`h-3.5 w-3.5 text-muted-foreground ${isRefreshingStats ? "animate-spin" : ""}`}
             />
-            <span className="hidden sm:inline">Obnovit</span>
+            <span className="hidden sm:inline ml-1">Obnovit</span>
           </Button>
 
-          {/* Logout */}
+          {/* Logout (desktop) */}
           <Button
             type="button"
             variant="destructive"
             size="sm"
             onClick={handleLogout}
+            className="hidden sm:inline-flex h-8 sm:h-9 px-3 text-xs font-semibold shrink-0"
           >
-            <LogOut className="h-3.5 w-3.5" />
+            <LogOut className="h-3.5 w-3.5 mr-1" />
             <span>Odhlásit</span>
           </Button>
         </div>
       </div>
 
       {/* EVENT SELECTOR SWITCHER BAR */}
-      <Card className="p-3.5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 flex-1 min-w-[280px]">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+      <Card className="p-3 sm:p-3.5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2.5 flex-1 min-w-0">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground shrink-0">
               Skenuji pro akci:
             </span>
             <select
               value={selectedEventId}
               onChange={(e) => handleEventChange(e.target.value)}
-              className="flex-1 rounded-xl border border-input bg-card py-1.5 px-3 text-sm font-semibold text-foreground shadow-sm focus:border-ring focus:outline-hidden focus:ring-1 focus:ring-ring"
+              className="w-full rounded-xl border border-input bg-card py-2 sm:py-1.5 px-3 text-sm font-semibold text-foreground shadow-sm focus:border-ring focus:outline-hidden focus:ring-1 focus:ring-ring truncate"
             >
               <option value="">-- Všechny události (bez filtru) --</option>
               {events.map((ev) => (
@@ -395,20 +410,22 @@ export function CheckinDashboard({
           </div>
 
           {currentEvent && (
-            <div className="flex items-center gap-3 text-xs text-muted-foreground pl-1">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground sm:pl-1">
               {currentEvent.location && (
                 <span className="flex items-center gap-1 font-medium">
-                  <MapPin className="h-3.5 w-3.5 text-primary" />
-                  {currentEvent.location}
+                  <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span className="truncate">{currentEvent.location}</span>
                 </span>
               )}
               {currentEvent.date && (
                 <span className="flex items-center gap-1 font-medium">
-                  <Calendar className="h-3.5 w-3.5 text-primary" />
-                  {new Intl.DateTimeFormat("cs-CZ", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  }).format(new Date(currentEvent.date))}
+                  <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span>
+                    {new Intl.DateTimeFormat("cs-CZ", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    }).format(new Date(currentEvent.date))}
+                  </span>
                 </span>
               )}
             </div>
@@ -417,18 +434,18 @@ export function CheckinDashboard({
       </Card>
 
       {/* STATS OVERVIEW BAR */}
-      <Card className="p-4 shadow-sm">
+      <Card className="p-3.5 sm:p-4 shadow-sm">
         <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
           <button
             type="button"
             onClick={() => openEventModal("attendees")}
-            className="rounded-xl bg-muted/60 p-3 hover:bg-muted transition-colors text-center cursor-pointer"
+            className="rounded-xl bg-muted/60 p-2.5 sm:p-3 hover:bg-muted transition-colors text-center cursor-pointer flex flex-col justify-between"
             title="Zobrazit všechny registrované"
           >
-            <p className="text-xs font-bold uppercase tracking-wider text-primary">
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-primary leading-tight">
               Registrováno
             </p>
-            <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-foreground">
+            <p className="mt-1 text-xl sm:text-3xl font-extrabold text-foreground">
               {stats.total}
             </p>
           </button>
@@ -436,22 +453,22 @@ export function CheckinDashboard({
           <button
             type="button"
             onClick={() => openEventModal("attendees")}
-            className="rounded-xl bg-emerald-950/30 border border-emerald-500/20 p-3 hover:bg-emerald-950/50 transition-colors text-center cursor-pointer"
+            className="rounded-xl bg-emerald-950/30 border border-emerald-500/20 p-2.5 sm:p-3 hover:bg-emerald-950/50 transition-colors text-center cursor-pointer flex flex-col justify-between"
             title="Zobrazit odbavené účastníky"
           >
-            <p className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-emerald-400 leading-tight">
               Odbaveno u vstupu
             </p>
-            <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-emerald-400">
+            <p className="mt-1 text-xl sm:text-3xl font-extrabold text-emerald-400">
               {stats.attended}
             </p>
           </button>
 
-          <div className="rounded-xl bg-muted/60 p-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <div className="rounded-xl bg-muted/60 p-2.5 sm:p-3 flex flex-col justify-between">
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-muted-foreground leading-tight">
               Zbývá dorazit
             </p>
-            <p className="mt-1 text-2xl sm:text-3xl font-extrabold text-muted-foreground">
+            <p className="mt-1 text-xl sm:text-3xl font-extrabold text-muted-foreground">
               {stats.remaining}
             </p>
           </div>
