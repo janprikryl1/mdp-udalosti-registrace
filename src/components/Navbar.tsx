@@ -1,18 +1,14 @@
 "use client";
 
-import { CheckCircle2, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 
 export function Navbar() {
-  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const isCheckin = pathname?.startsWith("/checkin");
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-primary/25 bg-background/92 backdrop-blur-md transition-all">
@@ -68,18 +64,6 @@ export function Navbar() {
         {/* Action Buttons */}
         <div className="hidden md:flex items-center gap-2.5">
           <ThemeToggle />
-
-          <Button
-            asChild
-            variant={isCheckin ? "secondary" : "outline"}
-            size="sm"
-            className="text-xs"
-          >
-            <Link href="/checkin" className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-              <span>Odbavení u vstupu</span>
-            </Link>
-          </Button>
 
           <Button
             asChild
@@ -144,16 +128,6 @@ export function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Registrovat se na ples (zdarma)
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full">
-                <Link
-                  href="/checkin"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-1.5"
-                >
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                  Vstup pro pořadatele (Check-in)
                 </Link>
               </Button>
               <div className="flex items-center justify-between px-1 pt-1 text-xs text-muted-foreground">

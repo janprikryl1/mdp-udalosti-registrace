@@ -14,12 +14,9 @@ import {
   Loader2,
   LogOut,
   MapPin,
-  RefreshCw,
   Search,
   Undo2,
   Users,
-  Volume2,
-  VolumeX,
   X,
   Zap,
 } from "lucide-react";
@@ -279,46 +276,31 @@ export function CheckinDashboard({
 
       {/* TOP HEADER & CONTROLS */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3 sm:pb-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping shrink-0" />
-              <h1 className="text-lg sm:text-2xl font-extrabold text-foreground tracking-tight">
-                Odbavovací terminál
-              </h1>
-            </div>
-            <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-              <span className="hidden sm:inline">Mládež děkanátu Prostějov</span>
-              <span className="hidden sm:inline">•</span>
-              <span className="font-semibold text-primary truncate max-w-[210px] sm:max-w-none">
-                {currentEvent ? currentEvent.title : "Všechny akce"}
-              </span>
-            </p>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping shrink-0" />
+            <h1 className="text-lg sm:text-2xl font-extrabold text-foreground tracking-tight">
+              Odbavovací terminál
+            </h1>
           </div>
-
-          {/* Logout on mobile */}
-          <Button
-            type="button"
-            variant="destructive"
-            size="sm"
-            onClick={handleLogout}
-            className="sm:hidden h-8 px-2.5 text-xs font-semibold shrink-0"
-            title="Odhlásit organizátora"
-          >
-            <LogOut className="h-3.5 w-3.5 mr-1" />
-            <span>Odhlásit</span>
-          </Button>
+          <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+            <span className="hidden sm:inline">Mládež děkanátu Prostějov</span>
+            <span className="hidden sm:inline">•</span>
+            <span className="font-semibold text-primary truncate max-w-[210px] sm:max-w-none">
+              {currentEvent ? currentEvent.title : "Všechny akce"}
+            </span>
+          </p>
         </div>
 
-        {/* Toolbar buttons */}
-        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-0.5 sm:pb-0">
+        {/* Toolbar buttons: exactly 3 clean buttons */}
+        <div className="flex items-center gap-2">
           {/* Attendees List Trigger */}
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => openEventModal("attendees")}
-            className="font-semibold h-8 sm:h-9 px-2.5 sm:px-3 text-xs sm:text-sm shrink-0"
+            className="font-semibold h-8 sm:h-9 px-2.5 sm:px-3 text-xs sm:text-sm"
             title="Zobrazit seznam zaregistrovaných účastníků"
           >
             <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-1" />
@@ -331,55 +313,21 @@ export function CheckinDashboard({
             variant="outline"
             size="sm"
             onClick={() => openEventModal("list")}
-            className="font-semibold h-8 sm:h-9 px-2.5 sm:px-3 text-xs sm:text-sm shrink-0"
+            className="font-semibold h-8 sm:h-9 px-2.5 sm:px-3 text-xs sm:text-sm"
             title="Spravovat a vytvářet události"
           >
             <Layers className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-1" />
             <span>Správa akcí</span>
           </Button>
 
-          {/* Sound Toggle */}
-          <Button
-            type="button"
-            variant={soundEnabled ? "secondary" : "outline"}
-            size="sm"
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            className="h-8 sm:h-9 px-2.5 text-xs shrink-0"
-            title={soundEnabled ? "Zvuk je zapnutý" : "Zvuk je ztlumený"}
-          >
-            {soundEnabled ? (
-              <Volume2 className="h-3.5 w-3.5 text-emerald-500" />
-            ) : (
-              <VolumeX className="h-3.5 w-3.5 text-muted-foreground" />
-            )}
-            <span className="hidden sm:inline ml-1">
-              {soundEnabled ? "Zvuk ZAP" : "Zvuk VYP"}
-            </span>
-          </Button>
-
-          {/* Refresh Stats */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => refreshStats(selectedEventId)}
-            disabled={isRefreshingStats}
-            className="h-8 sm:h-9 px-2.5 text-xs shrink-0"
-            title="Aktualizovat statistiky"
-          >
-            <RefreshCw
-              className={`h-3.5 w-3.5 text-muted-foreground ${isRefreshingStats ? "animate-spin" : ""}`}
-            />
-            <span className="hidden sm:inline ml-1">Obnovit</span>
-          </Button>
-
-          {/* Logout (desktop) */}
+          {/* Logout */}
           <Button
             type="button"
             variant="destructive"
             size="sm"
             onClick={handleLogout}
-            className="hidden sm:inline-flex h-8 sm:h-9 px-3 text-xs font-semibold shrink-0"
+            className="h-8 sm:h-9 px-2.5 sm:px-3 text-xs font-semibold"
+            title="Odhlásit organizátora"
           >
             <LogOut className="h-3.5 w-3.5 mr-1" />
             <span>Odhlásit</span>
