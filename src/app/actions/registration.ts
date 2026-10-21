@@ -5,6 +5,7 @@ import { generateQRCodeDataUrl } from "@/lib/qrcode";
 import {
   createOrGetRegistration,
   getRegistrationById,
+  getTableReservations,
 } from "@/lib/registrations";
 import {
   type RegistrationFormData,
@@ -46,6 +47,8 @@ export async function registerParticipantAction(
       email: registration.email,
       city: registration.city,
       registrationId: registration.id,
+      tableNumber: registration.tableNumber,
+      seatNumber: registration.seatNumber,
       qrCodeDataUrl: qrDataUrl,
     });
 
@@ -96,6 +99,8 @@ export async function getRegistrationDetailsAction(id: string) {
         lastName: registration.lastName,
         email: registration.email,
         city: registration.city,
+        tableNumber: registration.tableNumber,
+        seatNumber: registration.seatNumber,
         status: registration.status,
         createdAt: registration.createdAt.toISOString(),
       },
@@ -106,6 +111,22 @@ export async function getRegistrationDetailsAction(id: string) {
     return {
       success: false,
       error: "Nepodařilo se načíst data registrace",
+    };
+  }
+}
+
+export async function getTableStatusAction(eventId?: string) {
+  try {
+    const result = await getTableReservations(eventId);
+    return {
+      success: true,
+      data: result,
+    };
+  } catch (error) {
+    console.error("[Get Table Status Error]", error);
+    return {
+      success: false,
+      error: "Nepodařilo se načíst stav obsazenosti stolů.",
     };
   }
 }

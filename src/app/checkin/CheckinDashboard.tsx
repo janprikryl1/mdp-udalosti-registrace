@@ -3,6 +3,7 @@
 import type { Event, Registration } from "@prisma/client";
 import {
   AlertTriangle,
+  Armchair,
   ArrowRight,
   Calendar,
   Camera,
@@ -76,14 +77,14 @@ export function CheckinDashboard({
   });
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [modalInitialTab, setModalInitialTab] = useState<
-    "list" | "create" | "attendees"
+    "list" | "create" | "attendees" | "tables"
   >("list");
 
   // Camera scanner enable/disable
   const [isScannerEnabled, setIsScannerEnabled] = useState(true);
 
   const openEventModal = useCallback(
-    (tab: "list" | "create" | "attendees" = "list") => {
+    (tab: "list" | "create" | "attendees" | "tables" = "list") => {
       setModalInitialTab(tab);
       setIsEventModalOpen(true);
     },
@@ -91,7 +92,7 @@ export function CheckinDashboard({
   );
 
   // Sound enable/disable
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, _setSoundEnabled] = useState(true);
 
   // Statistics
   const [stats, setStats] = useState<CheckinStats>(
@@ -102,7 +103,7 @@ export function CheckinDashboard({
       recentAttended: [],
     },
   );
-  const [isRefreshingStats, setIsRefreshingStats] = useState(false);
+  const [_isRefreshingStats, setIsRefreshingStats] = useState(false);
 
   // Active Scan/Checkin Result
   const [activeResult, setActiveResult] = useState<ActiveResult | null>(null);
@@ -307,6 +308,19 @@ export function CheckinDashboard({
             <span>Účastníci ({stats.total})</span>
           </Button>
 
+          {/* Table Seating Map Trigger */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => openEventModal("tables")}
+            className="font-semibold h-8 sm:h-9 px-2.5 sm:px-3 text-xs sm:text-sm"
+            title="Zobrazit plánek stolů a obsazenost sálu"
+          >
+            <Armchair className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mr-1" />
+            <span>Stoly & sál</span>
+          </Button>
+
           {/* Manage Events Modal Trigger */}
           <Button
             type="button"
@@ -496,8 +510,22 @@ export function CheckinDashboard({
               <p className="text-xs text-white/80">
                 E-mail: {activeResult.registration.email}
               </p>
+              {activeResult.registration.tableNumber &&
+              activeResult.registration.seatNumber ? (
+                <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-white/25 px-3 py-1 font-bold text-xs text-white border border-white/40 shadow-xs">
+                  <Armchair className="h-4 w-4" />
+                  <span>
+                    Místo u stolu: Stůl {activeResult.registration.tableNumber}{" "}
+                    • Místo {activeResult.registration.seatNumber}
+                  </span>
+                </div>
+              ) : (
+                <p className="mt-2 text-xs text-white/70 italic">
+                  Bez rezervace stolu (volné stání & tanec)
+                </p>
+              )}
               {activeResult.registration.event && (
-                <p className="text-xs text-white/90 font-semibold mt-1">
+                <p className="text-xs text-white/90 font-semibold mt-2">
                   Událost: {activeResult.registration.event.title}
                 </p>
               )}

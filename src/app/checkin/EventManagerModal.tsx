@@ -2,6 +2,7 @@
 
 import type { Event, Registration } from "@prisma/client";
 import {
+  Armchair,
   Calendar,
   Check,
   CheckCircle2,
@@ -11,6 +12,7 @@ import {
   MapPin,
   Plus,
   Power,
+  RefreshCw,
   Search,
   Sparkles,
   Trash2,
@@ -18,15 +20,21 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   createEventAction,
   deleteAttendeeAction,
   deleteEventAction,
   getEventAttendeesAction,
   getEventsAction,
+  getEventTableAssignmentsAction,
   toggleEventActiveAction,
+  updateEventTableCountAction,
 } from "@/app/actions/events";
+import {
+  type AdminSeatAssignment,
+  SeatingMap,
+} from "@/components/seating/SeatingMap";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,7 +49,7 @@ interface EventManagerModalProps {
   selectedEventId: string;
   onSelectEvent: (eventId: string) => void;
   onEventsUpdated: (events: EventWithCounts[]) => void;
-  initialTab?: "list" | "create" | "attendees";
+  initialTab?: "list" | "create" | "attendees" | "tables";
   onCheckinAttendee?: (code: string) => void;
 }
 
@@ -55,9 +63,9 @@ export function EventManagerModal({
   initialTab = "list",
   onCheckinAttendee,
 }: EventManagerModalProps) {
-  const [activeTab, setActiveTab] = useState<"list" | "create" | "attendees">(
-    initialTab,
-  );
+  const [activeTab, setActiveTab] = useState<
+    "list" | "create" | "attendees" | "tables"
+  >(initialTab);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
@@ -87,14 +95,52 @@ export function EventManagerModal({
   const [date, setDate] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
+  const [tableCountFormInput, setTableCountFormInput] = useState<number>(6);
+
+  // Table Seating tab state
+  const [tableAssignments, setTableAssignments] = useState<
+    AdminSeatAssignment[]
+  >([]);
+  const [adminTableCount, setAdminTableCount] = useState<number>(6);
+  const [adminSeatsPerTable, setAdminSeatsPerTable] = useState<number>(8);
+  const [isLoadingTables, setIsLoadingTables] = useState<boolean>(false);
+  const [isUpdatingTableCount, setIsUpdatingTableCount] =
+    useState<boolean>(false);
+  const [tableFilterEventId, setTableFilterEventId] = useState<string>(
+    selectedEventId || "",
+  );
+  const [tableNumberFilter, setTableNumberFilter] = useState<string>("ALL");
+  const [tableSearchQuery, setTableSearchQuery] = useState<string>("");
 
   // Sync initial tab when opened
   useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab);
       setAttendeeFilterEventId(selectedEventId || "");
+      setTableFilterEventId(selectedEventId || "");
     }
   }, [isOpen, initialTab, selectedEventId]);
+
+  const loadTableData = useCallback(async (eventId?: string) => {
+    setIsLoadingTables(true);
+    try {
+      const res = await getEventTableAssignmentsAction(eventId);
+      if (res.success) {
+        setTableAssignments(res.assignments as AdminSeatAssignment[]);
+        setAdminTableCount(res.tableCount);
+        setAdminSeatsPerTable(res.seatsPerTable);
+      }
+    } finally {
+      setIsLoadingTables(false);
+    }
+  }, []);
+
+  // Load table data when tab switches to 'tables' or filter changes
+  useEffect(() => {
+    if (isOpen && activeTab === "tables") {
+      loadTableData(tableFilterEventId || undefined);
+    }
+  }, [isOpen, activeTab, tableFilterEventId, loadTableData]);
 
   // Load attendees when tab switches to 'attendees' or filter changes
   useEffect(() => {
@@ -118,6 +164,25 @@ export function EventManagerModal({
     const res = await getEventsAction();
     if (res.success && res.events) {
       onEventsUpdated(res.events);
+    }
+  };
+
+  const handleUpdateTableCountForEvent = async (
+    eventId: string,
+    newCount: number,
+  ) => {
+    if (!eventId || newCount < 1 || newCount > 50) return;
+    setIsUpdatingTableCount(true);
+    try {
+      const res = await updateEventTableCountAction(eventId, newCount);
+      if (res.success && res.event) {
+        if (eventId === tableFilterEventId) {
+          setAdminTableCount(res.event.tableCount);
+        }
+        await refreshEventsList();
+      }
+    } finally {
+      setIsUpdatingTableCount(false);
     }
   };
 
@@ -194,6 +259,7 @@ export function EventManagerModal({
         date: date.trim() || undefined,
         location: location.trim() || undefined,
         description: description.trim() || undefined,
+        tableCount: tableCountFormInput || 6,
         isActive: true,
       });
 
@@ -209,6 +275,7 @@ export function EventManagerModal({
       setDate("");
       setLocation("");
       setDescription("");
+      setTableCountFormInput(6);
 
       // Refresh list and select new event
       await refreshEventsList();
@@ -304,6 +371,19 @@ export function EventManagerModal({
 
           <button
             type="button"
+            onClick={() => setActiveTab("tables")}
+            className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === "tables"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Armchair className="h-4 w-4" />
+            <span>Zasedací pořádek & Stoly</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab("create")}
             className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === "create"
@@ -378,6 +458,51 @@ export function EventManagerModal({
                             <span className="font-mono text-muted-foreground">
                               slug: {ev.slug}
                             </span>
+                            <div className="inline-flex items-center gap-1.5 rounded-lg border border-primary/25 bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+                              <Armchair className="h-3.5 w-3.5 text-primary" />
+                              <span>
+                                Stoly: <strong>{ev.tableCount || 6}</strong> (
+                                {(ev.tableCount || 6) * 8} míst)
+                              </span>
+                              <div className="flex items-center gap-0.5 ml-1">
+                                <button
+                                  type="button"
+                                  disabled={
+                                    isUpdatingTableCount ||
+                                    (ev.tableCount || 6) <= 2
+                                  }
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUpdateTableCountForEvent(
+                                      ev.id,
+                                      (ev.tableCount || 6) - 1,
+                                    );
+                                  }}
+                                  className="h-4 w-4 rounded-xs border border-primary/40 bg-card flex items-center justify-center text-[10px] font-bold hover:border-primary disabled:opacity-40 cursor-pointer"
+                                  title="Odebrat 1 stůl"
+                                >
+                                  -
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={
+                                    isUpdatingTableCount ||
+                                    (ev.tableCount || 6) >= 40
+                                  }
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUpdateTableCountForEvent(
+                                      ev.id,
+                                      (ev.tableCount || 6) + 1,
+                                    );
+                                  }}
+                                  className="h-4 w-4 rounded-xs border border-primary/40 bg-card flex items-center justify-center text-[10px] font-bold hover:border-primary disabled:opacity-40 cursor-pointer"
+                                  title="Zvýšit počet stolů"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
                           </div>
 
                           {ev.description && (
@@ -434,6 +559,19 @@ export function EventManagerModal({
                           >
                             <Users className="h-3.5 w-3.5 mr-1" />
                             <span>Účastníci ({total})</span>
+                          </Button>
+
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setTableFilterEventId(ev.id);
+                              setActiveTab("tables");
+                            }}
+                          >
+                            <Armchair className="h-3.5 w-3.5 mr-1 text-primary" />
+                            <span>Stoly ({ev.tableCount || 6})</span>
                           </Button>
 
                           <Button
@@ -718,6 +856,305 @@ export function EventManagerModal({
             </div>
           )}
 
+          {/* TAB: TABLES & SEATING MAP */}
+          {activeTab === "tables" && (
+            <div className="space-y-5">
+              {/* Event selection & Table count controls */}
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/30 bg-card/70 p-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div>
+                    <label
+                      htmlFor="table-event-select"
+                      className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1"
+                    >
+                      Vybraná akce:
+                    </label>
+                    <select
+                      id="table-event-select"
+                      value={tableFilterEventId}
+                      onChange={(e) => setTableFilterEventId(e.target.value)}
+                      className="rounded-lg border border-input bg-card px-3 py-1.5 text-xs font-semibold text-foreground"
+                    >
+                      {events.map((ev) => (
+                        <option key={ev.id} value={ev.id}>
+                          {ev.title}{" "}
+                          {ev.id === selectedEventId ? "(aktuální)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Table count adjuster */}
+                <div className="flex flex-wrap items-center gap-3 bg-primary/10 border border-primary/30 rounded-xl p-2.5">
+                  <div className="text-right">
+                    <span className="block text-[10px] font-heading uppercase font-bold text-primary">
+                      Nastavení kapacity
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Počet stolů pro tuto akci:
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-background/90 rounded-lg border border-primary/40 p-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={adminTableCount <= 2 || isUpdatingTableCount}
+                      onClick={() =>
+                        handleUpdateTableCountForEvent(
+                          tableFilterEventId || selectedEventId,
+                          adminTableCount - 1,
+                        )
+                      }
+                      className="h-7 w-7 p-0 text-foreground hover:text-primary font-bold"
+                      title="Odebrat 1 stůl"
+                    >
+                      -
+                    </Button>
+                    <span className="px-2 font-heading text-sm font-bold text-foreground lining-nums">
+                      {adminTableCount}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={adminTableCount >= 40 || isUpdatingTableCount}
+                      onClick={() =>
+                        handleUpdateTableCountForEvent(
+                          tableFilterEventId || selectedEventId,
+                          adminTableCount + 1,
+                        )
+                      }
+                      className="h-7 w-7 p-0 text-foreground hover:text-primary font-bold"
+                      title="Zvýšit počet stolů"
+                    >
+                      +
+                    </Button>
+                  </div>
+                  <span className="text-xs font-semibold text-foreground lining-nums">
+                    ({adminTableCount * adminSeatsPerTable} míst)
+                  </span>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      loadTableData(tableFilterEventId || undefined)
+                    }
+                    disabled={isLoadingTables}
+                    className="h-8 text-xs text-muted-foreground hover:text-primary"
+                    title="Aktualizovat data"
+                  >
+                    <RefreshCw
+                      className={`h-3.5 w-3.5 ${isLoadingTables ? "animate-spin text-primary" : ""}`}
+                    />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Statistics cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <Card className="p-3 border-primary/25 bg-card/60 text-center">
+                  <span className="block text-[10px] font-heading font-semibold uppercase text-muted-foreground">
+                    Celkem stolů
+                  </span>
+                  <span className="text-xl font-extrabold text-foreground lining-nums">
+                    {adminTableCount}
+                  </span>
+                </Card>
+
+                <Card className="p-3 border-primary/25 bg-card/60 text-center">
+                  <span className="block text-[10px] font-heading font-semibold uppercase text-muted-foreground">
+                    Celková místa
+                  </span>
+                  <span className="text-xl font-extrabold text-foreground lining-nums">
+                    {adminTableCount * adminSeatsPerTable}
+                  </span>
+                </Card>
+
+                <Card className="p-3 border-primary/25 bg-card/60 text-center">
+                  <span className="block text-[10px] font-heading font-semibold uppercase text-muted-foreground">
+                    Zarezervováno
+                  </span>
+                  <span className="text-xl font-extrabold text-primary lining-nums">
+                    {tableAssignments.length}
+                  </span>
+                </Card>
+
+                <Card className="p-3 border-primary/25 bg-card/60 text-center">
+                  <span className="block text-[10px] font-heading font-semibold uppercase text-muted-foreground">
+                    Volných míst
+                  </span>
+                  <span className="text-xl font-extrabold text-emerald-400 lining-nums">
+                    {Math.max(
+                      0,
+                      adminTableCount * adminSeatsPerTable -
+                        tableAssignments.length,
+                    )}
+                  </span>
+                </Card>
+              </div>
+
+              {/* Interactive Hall Seating Map */}
+              {isLoadingTables ? (
+                <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground gap-2">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <span className="text-sm font-medium">
+                    Načítám zasedací pořádek sálu...
+                  </span>
+                </div>
+              ) : (
+                <SeatingMap
+                  tableCount={adminTableCount}
+                  seatsPerTable={adminSeatsPerTable}
+                  reservedSeats={tableAssignments.map((a) => ({
+                    tableNumber: a.tableNumber,
+                    seatNumber: a.seatNumber,
+                  }))}
+                  adminAssignments={tableAssignments}
+                  isAdminView={true}
+                  onTableCountChange={(newCount) =>
+                    handleUpdateTableCountForEvent(
+                      tableFilterEventId || selectedEventId,
+                      newCount,
+                    )
+                  }
+                  isUpdatingTableCount={isUpdatingTableCount}
+                />
+              )}
+
+              {/* Table assignments list with filter */}
+              <div className="space-y-3 pt-3 border-t border-border">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="font-heading text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <Armchair className="h-4 w-4 text-primary" />
+                    <span>
+                      Seznam rezervací u stolů ({tableAssignments.length})
+                    </span>
+                  </h3>
+
+                  {/* Filters */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative">
+                      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="Hledat jméno / email..."
+                        value={tableSearchQuery}
+                        onChange={(e) => setTableSearchQuery(e.target.value)}
+                        className="h-8 pl-8 text-xs w-44"
+                      />
+                    </div>
+
+                    <select
+                      value={tableNumberFilter}
+                      onChange={(e) => setTableNumberFilter(e.target.value)}
+                      className="rounded-lg border border-input bg-card px-2.5 py-1 text-xs text-foreground h-8"
+                    >
+                      <option value="ALL">Všechny stoly</option>
+                      {Array.from(
+                        { length: adminTableCount },
+                        (_, i) => i + 1,
+                      ).map((num) => (
+                        <option key={num} value={num.toString()}>
+                          Stůl {num}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* List items */}
+                <div className="space-y-2">
+                  {tableAssignments
+                    .filter((a) => {
+                      if (
+                        tableNumberFilter !== "ALL" &&
+                        a.tableNumber.toString() !== tableNumberFilter
+                      ) {
+                        return false;
+                      }
+                      if (tableSearchQuery.trim()) {
+                        const q = tableSearchQuery.toLowerCase();
+                        const fullName =
+                          `${a.registration.firstName} ${a.registration.lastName}`.toLowerCase();
+                        return (
+                          fullName.includes(q) ||
+                          a.registration.email.toLowerCase().includes(q) ||
+                          a.registration.city.toLowerCase().includes(q)
+                        );
+                      }
+                      return true;
+                    })
+                    .sort((a, b) => {
+                      if (a.tableNumber !== b.tableNumber) {
+                        return a.tableNumber - b.tableNumber;
+                      }
+                      return a.seatNumber - b.seatNumber;
+                    })
+                    .map((item) => (
+                      <div
+                        key={`${item.tableNumber}-${item.seatNumber}-${item.registration.id}`}
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card/60 p-3 text-xs hover:border-primary/40 transition-colors"
+                      >
+                        <div className="flex flex-wrap items-center gap-3">
+                          <Badge
+                            variant="brand"
+                            className="font-heading font-bold"
+                          >
+                            Stůl {item.tableNumber} • Místo {item.seatNumber}
+                          </Badge>
+                          <span className="font-bold text-foreground text-sm">
+                            {item.registration.firstName}{" "}
+                            {item.registration.lastName}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {item.registration.city}
+                          </span>
+                          <span className="text-muted-foreground/60">•</span>
+                          <span className="text-muted-foreground">
+                            {item.registration.email}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {item.registration.status === "ATTENDED" ? (
+                            <Badge variant="success">Odbaven</Badge>
+                          ) : (
+                            <Badge variant="secondary">Čeká na příchod</Badge>
+                          )}
+
+                          {item.registration.status === "REGISTERED" &&
+                            onCheckinAttendee && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="brand"
+                                onClick={() => {
+                                  onCheckinAttendee(item.registration.id);
+                                  onClose();
+                                }}
+                                className="h-7 text-xs px-2.5"
+                              >
+                                Odbavit
+                              </Button>
+                            )}
+                        </div>
+                      </div>
+                    ))}
+
+                  {tableAssignments.length === 0 && (
+                    <p className="text-center py-6 text-xs text-muted-foreground">
+                      Zatím si nikdo nezarezervoval místo u stolu.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* TAB 3: CREATE EVENT */}
           {activeTab === "create" && (
             <form onSubmit={handleCreateSubmit} className="space-y-4">
@@ -803,6 +1240,41 @@ export function EventManagerModal({
                   onChange={(e) => setLocation(e.target.value)}
                   disabled={isSubmitting}
                 />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="event-tables"
+                  className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1.5"
+                >
+                  Počet stolů k rezervaci (každý stůl má 8 míst)
+                </label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    id="event-tables"
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={tableCountFormInput}
+                    onChange={(e) =>
+                      setTableCountFormInput(
+                        Math.max(
+                          1,
+                          Math.min(50, parseInt(e.target.value, 10) || 6),
+                        ),
+                      )
+                    }
+                    disabled={isSubmitting}
+                    className="w-32"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    Celková kapacita:{" "}
+                    <strong className="text-foreground">
+                      {tableCountFormInput * 8}
+                    </strong>{" "}
+                    míst k sezení
+                  </span>
+                </div>
               </div>
 
               <div>

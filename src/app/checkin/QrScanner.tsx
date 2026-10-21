@@ -241,7 +241,8 @@ export function QrScanner({ onScan, isPaused }: QrScannerProps) {
           >
             <FlipHorizontal className="h-3.5 w-3.5 text-primary" />
             <span>
-              Přepnout kameru ({facingMode === "environment" ? "zadní" : "přední"})
+              Přepnout kameru (
+              {facingMode === "environment" ? "zadní" : "přední"})
             </span>
           </button>
 

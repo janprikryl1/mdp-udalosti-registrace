@@ -7,7 +7,9 @@ import {
   deleteRegistration,
   getAllEvents,
   getEventRegistrations,
+  getEventTableAssignments,
   toggleEventActive,
+  updateEventTableCount,
 } from "@/lib/registrations";
 import { type EventFormData, eventFormSchema } from "@/lib/validations";
 
@@ -135,6 +137,56 @@ export async function deleteAttendeeAction(id: string) {
       success: false,
       error:
         error instanceof Error ? error.message : "Chyba při mazání účastníka",
+    };
+  }
+}
+
+export async function updateEventTableCountAction(
+  eventId: string,
+  tableCount: number,
+) {
+  const authenticated = await isOrganizerAuthenticated();
+  if (!authenticated) {
+    return { success: false, error: "Nejste přihlášeni jako organizátor" };
+  }
+
+  try {
+    const updated = await updateEventTableCount(eventId, tableCount);
+    return { success: true, event: updated };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Chyba při úpravě počtu stolů",
+    };
+  }
+}
+
+export async function getEventTableAssignmentsAction(eventId?: string) {
+  const authenticated = await isOrganizerAuthenticated();
+  if (!authenticated) {
+    return {
+      success: false,
+      error: "Nejste přihlášeni jako organizátor",
+      assignments: [],
+      tableCount: 6,
+      seatsPerTable: 8,
+    };
+  }
+
+  try {
+    const result = await getEventTableAssignments(eventId);
+    return { success: true, ...result };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Chyba při načítání obsazenosti stolů",
+      assignments: [],
+      tableCount: 6,
+      seatsPerTable: 8,
     };
   }
 }

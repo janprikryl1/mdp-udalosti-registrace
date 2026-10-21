@@ -19,6 +19,8 @@ export const eventFormSchema = z.object({
   description: z.string().trim().max(500).optional(),
   date: z.string().optional(),
   location: z.string().trim().max(120).optional(),
+  tableCount: z.number().int().min(1).max(50).optional(),
+  seatsPerTable: z.number().int().min(1).max(20).optional(),
   isActive: z.boolean().default(true),
 });
 
@@ -46,6 +48,12 @@ export const registrationFormSchema = z.object({
     .trim()
     .min(2, { message: "Zadejte své bydliště nebo farnost (např. Prostějov)" })
     .max(80, { message: "Název je příliš dlouhý" }),
+  tableNumber: z.number().int().positive().nullable().optional(),
+  seatNumber: z.number().int().positive().nullable().optional(),
+  consent: z.boolean().refine((val) => val === true, {
+    message:
+      "Pro odeslání registrace je nutný souhlas se zpracováním osobních údajů",
+  }),
 });
 
 export type RegistrationFormData = z.infer<typeof registrationFormSchema>;

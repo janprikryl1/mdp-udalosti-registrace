@@ -1,11 +1,15 @@
 import {
+  Armchair,
   ArrowRight,
   Calendar,
   CheckCircle2,
   Clock,
+  GlassWater,
   HandHeart,
   HelpCircle,
+  LogIn,
   MapPin,
+  Music,
   QrCode,
   ShieldCheck,
   Sparkles,
@@ -597,6 +601,230 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* SEATING PLAN & TABLE RESERVATIONS */}
+      <section
+        id="stoly"
+        className="mx-auto max-w-5xl px-4 sm:px-6 scroll-mt-20 font-body"
+      >
+        <div className="text-center mb-8">
+          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-primary">
+            Rozmístění sálu & posezení
+          </span>
+          <h2 className="mt-1 font-heading text-3xl sm:text-4xl font-semibold text-foreground">
+            Plán sálu & rezervace míst u stolu
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            V sále hasičárny máme připraveno{" "}
+            <strong>3 stoly na každé straně</strong>, každý stůl má{" "}
+            <strong>8 míst</strong>. Při online registraci si můžeš zdarma
+            vybrat své konkrétní místo k sezení.
+          </p>
+        </div>
+
+        {/* Visual Hall Diagram matching user's drawing */}
+        <div className="relative rounded-2xl border-2 border-primary/40 bg-radial-[at_top] from-[#241f1a] via-[#161413] to-[#0d0c0b] p-5 sm:p-8 shadow-2xl overflow-hidden mb-8">
+          {/* Subtle gold glow */}
+          <div className="pointer-events-none absolute -top-24 left-1/2 -z-0 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
+
+          {/* Top: VCHOD */}
+          <div className="relative z-10 mx-auto mb-6 flex max-w-xs flex-col items-center">
+            <div className="flex items-center gap-2 rounded-full border border-primary/60 bg-primary/20 px-5 py-1 text-xs font-heading font-semibold uppercase tracking-widest text-primary shadow-xs">
+              <LogIn className="h-4 w-4" />
+              <span>VCHOD DO SÁLU</span>
+            </div>
+            <div className="mt-1 h-3 w-32 border-b-2 border-dashed border-primary/40" />
+          </div>
+
+          {/* Grid: Fotokoutek - Tables - Bar */}
+          <div className="relative z-10 grid grid-cols-12 gap-4 items-center">
+            {/* Left side wall: Fotokoutek */}
+            <div className="col-span-12 sm:col-span-2 flex sm:flex-col items-center justify-center rounded-xl border border-amber-500/35 bg-amber-500/10 p-3 sm:py-8 text-center">
+              <Sparkles className="h-5 w-5 text-amber-400 mb-1.5" />
+              <span className="font-heading text-xs font-bold uppercase tracking-wider text-amber-300">
+                FOTOKOUTEK
+              </span>
+              <span className="text-[10px] text-amber-400/80 mt-1">
+                Téma Malý princ
+              </span>
+            </div>
+
+            {/* Middle: Tables arranged 3 on left and 3 on right */}
+            <div className="col-span-12 sm:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Left Column: Stoly 1, 2, 3 */}
+              <div className="space-y-3">
+                <div className="text-center font-heading text-xs font-semibold uppercase tracking-wider text-primary/80 border-b border-primary/25 pb-1">
+                  Levá strana sálu
+                </div>
+                {[1, 2, 3].map((num) => (
+                  <div
+                    key={num}
+                    className="rounded-xl border border-primary/30 bg-card/70 p-3 shadow-sm hover:border-primary/60 transition-colors"
+                  >
+                    <div className="flex items-center justify-between text-xs font-heading font-semibold text-foreground mb-1.5">
+                      <span>Stůl {num}</span>
+                      <span className="text-[10px] text-primary bg-primary/15 px-2 py-0.5 rounded-full">
+                        8 míst
+                      </span>
+                    </div>
+                    {/* Visual 8 seats: 4 top, surface, 4 bottom */}
+                    <div className="space-y-1">
+                      <div className="grid grid-cols-4 gap-1">
+                        {[1, 2, 3, 4].map((s) => (
+                          <div
+                            key={s}
+                            className="h-6 rounded-xs border border-primary/40 bg-card/90 flex items-center justify-center text-[10px] text-muted-foreground font-semibold"
+                          >
+                            {s}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="relative h-2.5 rounded-2xs border border-primary/30 bg-primary/20 flex items-center justify-center">
+                        <div className="w-0 h-full border-r border-dashed border-primary/60" />
+                      </div>
+                      <div className="grid grid-cols-4 gap-1">
+                        {[5, 6, 7, 8].map((s) => (
+                          <div
+                            key={s}
+                            className="h-6 rounded-xs border border-primary/40 bg-card/90 flex items-center justify-center text-[10px] text-muted-foreground font-semibold"
+                          >
+                            {s}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Right Column: Stoly 4, 5, 6 */}
+              <div className="space-y-3">
+                <div className="text-center font-heading text-xs font-semibold uppercase tracking-wider text-primary/80 border-b border-primary/25 pb-1">
+                  Pravá strana sálu
+                </div>
+                {[4, 5, 6].map((num) => (
+                  <div
+                    key={num}
+                    className="rounded-xl border border-primary/30 bg-card/70 p-3 shadow-sm hover:border-primary/60 transition-colors"
+                  >
+                    <div className="flex items-center justify-between text-xs font-heading font-semibold text-foreground mb-1.5">
+                      <span>Stůl {num}</span>
+                      <span className="text-[10px] text-primary bg-primary/15 px-2 py-0.5 rounded-full">
+                        8 míst
+                      </span>
+                    </div>
+                    {/* Visual 8 seats */}
+                    <div className="space-y-1">
+                      <div className="grid grid-cols-4 gap-1">
+                        {[1, 2, 3, 4].map((s) => (
+                          <div
+                            key={s}
+                            className="h-6 rounded-xs border border-primary/40 bg-card/90 flex items-center justify-center text-[10px] text-muted-foreground font-semibold"
+                          >
+                            {s}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="relative h-2.5 rounded-2xs border border-primary/30 bg-primary/20 flex items-center justify-center">
+                        <div className="w-0 h-full border-r border-dashed border-primary/60" />
+                      </div>
+                      <div className="grid grid-cols-4 gap-1">
+                        {[5, 6, 7, 8].map((s) => (
+                          <div
+                            key={s}
+                            className="h-6 rounded-xs border border-primary/40 bg-card/90 flex items-center justify-center text-[10px] text-muted-foreground font-semibold"
+                          >
+                            {s}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right side wall: Bar */}
+            <div className="col-span-12 sm:col-span-2 flex sm:flex-col items-center justify-center rounded-xl border border-sky-500/35 bg-sky-500/10 p-3 sm:py-8 text-center">
+              <GlassWater className="h-5 w-5 text-sky-400 mb-1.5" />
+              <span className="font-heading text-xs font-bold uppercase tracking-wider text-sky-300">
+                BAR
+              </span>
+              <span className="text-[10px] text-sky-400/80 mt-1">
+                Nápoje & raut
+              </span>
+            </div>
+          </div>
+
+          {/* Bottom: Hudba / Parket */}
+          <div className="relative z-10 mx-auto mt-6 flex max-w-md flex-col items-center">
+            <div className="mb-1 h-3 w-48 border-t-2 border-dashed border-primary/40" />
+            <div className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/60 bg-gradient-to-r from-primary/20 via-primary/35 to-primary/20 px-6 py-2.5 text-center shadow-lg">
+              <Music className="h-4 w-4 text-primary animate-pulse" />
+              <span className="font-heading text-xs sm:text-sm font-bold uppercase tracking-widest text-foreground">
+                HUDBA • PÓDIUM • TANEČNÍ PARKET
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 3 Guidance cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card className="p-5 border-primary/25 bg-card/60">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary mb-3">
+              <Armchair className="h-5 w-5" />
+            </div>
+            <h3 className="font-heading text-base font-semibold text-foreground">
+              8 míst u každého stolu
+            </h3>
+            <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
+              Dostatek pohodlí pro partu přátel i prostor pro seznámení s novými
+              tvářemi z celého děkanátu.
+            </p>
+          </Card>
+
+          <Card className="p-5 border-primary/25 bg-card/60">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary mb-3">
+              <Users className="h-5 w-5" />
+            </div>
+            <h3 className="font-heading text-base font-semibold text-foreground">
+              Chcete sedět spolu?
+            </h3>
+            <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
+              Domluvte se s kamarády na čísle stolu. Každý si pak při své
+              registraci vybere volnou židli u téhož stolu.
+            </p>
+          </Card>
+
+          <Card className="p-5 border-primary/25 bg-card/60">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 text-primary mb-3">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <h3 className="font-heading text-base font-semibold text-foreground">
+              Výběr je dobrovolný
+            </h3>
+            <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
+              Rezervace židle není povinná. Pokud raději trávíš večer na
+              tanečním parketu či u baru, vstupenka platí i bez stolu.
+            </p>
+          </Card>
+        </div>
+
+        {/* Direct Action Link */}
+        <div className="text-center">
+          <Button
+            asChild
+            variant="brand"
+            size="lg"
+            className="shadow-xl shadow-primary/20 font-heading font-semibold uppercase tracking-wider text-sm px-8"
+          >
+            <Link href="/registrace">
+              <span>Vybrat volné místo u stolu a registrovat se</span>
+              <ArrowRight className="h-4 w-4 ml-1" />
+            </Link>
+          </Button>
+        </div>
+      </section>
+
       {/* TOMBOLA SHOWCASE — GRAPHIC 2c */}
       <section
         id="tombola"
@@ -893,8 +1121,13 @@ export default function HomePage() {
               size="xl"
               className="w-full sm:w-auto font-heading uppercase tracking-wider text-xs sm:text-sm px-5 sm:px-10 shadow-lg text-center"
             >
-              <Link href="/registrace" className="group flex items-center justify-center gap-1.5">
-                <span className="truncate">Vyplnit rychlou registraci zdarma</span>
+              <Link
+                href="/registrace"
+                className="group flex items-center justify-center gap-1.5"
+              >
+                <span className="truncate">
+                  Vyplnit rychlou registraci zdarma
+                </span>
                 <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 shrink-0 transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>

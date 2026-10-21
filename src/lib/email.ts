@@ -13,6 +13,8 @@ export interface SendTicketEmailParams {
   email: string;
   city: string;
   registrationId: string;
+  tableNumber?: number | null;
+  seatNumber?: number | null;
   qrCodeDataUrl?: string;
   qrCodeBuffer?: Buffer;
 }
@@ -52,6 +54,8 @@ export async function sendTicketEmail(params: SendTicketEmailParams): Promise<{
         email: params.email,
         city: params.city,
         registrationId: params.registrationId,
+        tableNumber: params.tableNumber,
+        seatNumber: params.seatNumber,
         qrCodeSrc: "cid:ticket-qr-code",
         ticketUrl,
       }),

@@ -15,6 +15,8 @@ const DEFAULT_EVENT: Event = {
   date: new Date("2026-11-28T18:00:00Z"),
   location: "Brodek u Prostějova",
   isActive: true,
+  tableCount: 6,
+  seatsPerTable: 8,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -95,13 +97,15 @@ export async function ensureDefaultEvent(): Promise<Event> {
     if (!event) {
       event = await prisma.event.create({
         data: {
-          slug: "cirkevni-silvestr-2025",
-          title: "Církevní Silvestr 2025",
+          slug: "cirkevni-silvestr-2026",
+          title: "Církevní Silvestr 2026 – Malý princ",
           description:
             "Tradiční silvestrovské setkání a oslava mládeže děkanátu Prostějov",
           date: new Date("2026-11-28T18:00:00Z"),
-          location: "Farní sál u Povýšení sv. Kříže, Prostějov",
+          location: "Brodek u Prostějova",
           isActive: true,
+          tableCount: 6,
+          seatsPerTable: 8,
         },
       });
     }
@@ -189,6 +193,8 @@ export async function createEvent(data: {
   description?: string;
   date?: string;
   location?: string;
+  tableCount?: number;
+  seatsPerTable?: number;
   isActive?: boolean;
 }): Promise<Event> {
   const generatedSlug =
@@ -202,6 +208,12 @@ export async function createEvent(data: {
     `akce-${Date.now()}`;
 
   const eventDate = data.date ? new Date(data.date) : null;
+  const tableCount = data.tableCount
+    ? Math.max(1, Math.min(50, data.tableCount))
+    : 6;
+  const seatsPerTable = data.seatsPerTable
+    ? Math.max(1, Math.min(20, data.seatsPerTable))
+    : 8;
 
   try {
     return await prisma.event.create({
@@ -211,6 +223,8 @@ export async function createEvent(data: {
         description: data.description?.trim(),
         date: eventDate,
         location: data.location?.trim(),
+        tableCount,
+        seatsPerTable,
         isActive: data.isActive ?? true,
       },
     });
@@ -224,12 +238,38 @@ export async function createEvent(data: {
         description: data.description?.trim() || null,
         date: eventDate,
         location: data.location?.trim() || null,
+        tableCount,
+        seatsPerTable,
         isActive: data.isActive ?? true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
       memoryEvents.set(id, newEvent);
       return newEvent;
+    }
+    throw error;
+  }
+}
+
+export async function updateEventTableCount(
+  id: string,
+  tableCount: number,
+): Promise<Event | null> {
+  const count = Math.max(1, Math.min(50, tableCount));
+  try {
+    return await prisma.event.update({
+      where: { id },
+      data: { tableCount: count },
+    });
+  } catch (error) {
+    if (isPrismaConnectionError(error)) {
+      const event = memoryEvents.get(id);
+      if (event) {
+        event.tableCount = count;
+        event.updatedAt = new Date();
+        return event;
+      }
+      return null;
     }
     throw error;
   }
@@ -317,6 +357,8 @@ export async function createOrGetRegistration(data: {
   lastName: string;
   email: string;
   city: string;
+  tableNumber?: number | null;
+  seatNumber?: number | null;
 }): Promise<{ registration: Registration & { event: Event }; isNew: boolean }> {
   const normalizedEmail = data.email.trim().toLowerCase();
 
@@ -329,7 +371,49 @@ export async function createOrGetRegistration(data: {
     event = await ensureDefaultEvent();
   }
 
+  const reqTable =
+    typeof data.tableNumber === "number" && data.tableNumber > 0
+      ? data.tableNumber
+      : null;
+  const reqSeat =
+    typeof data.seatNumber === "number" && data.seatNumber > 0
+      ? data.seatNumber
+      : null;
+
+  if (reqTable !== null && reqSeat !== null) {
+    const maxTables = event.tableCount || 6;
+    const maxSeats = event.seatsPerTable || 8;
+    if (reqTable < 1 || reqTable > maxTables) {
+      throw new Error(
+        `Neplatné číslo stolu (${reqTable}). K dispozici je 1 až ${maxTables} stolů.`,
+      );
+    }
+    if (reqSeat < 1 || reqSeat > maxSeats) {
+      throw new Error(
+        `Neplatné číslo místa (${reqSeat}). Každý stůl má ${maxSeats} míst.`,
+      );
+    }
+  }
+
   try {
+    // Check if table + seat is already taken
+    if (reqTable !== null && reqSeat !== null) {
+      const occupied = await prisma.registration.findFirst({
+        where: {
+          eventId: event.id,
+          tableNumber: reqTable,
+          seatNumber: reqSeat,
+          NOT: { email: { equals: normalizedEmail, mode: "insensitive" } },
+        },
+      });
+
+      if (occupied) {
+        throw new Error(
+          `Místo u stolu ${reqTable} (židle ${reqSeat}) bylo právě obsazeno jiným účastníkem. Vyberte si prosím jiné volné místo.`,
+        );
+      }
+    }
+
     const existing = await prisma.registration.findFirst({
       where: {
         eventId: event.id,
@@ -339,6 +423,21 @@ export async function createOrGetRegistration(data: {
     });
 
     if (existing) {
+      if (
+        reqTable !== null &&
+        reqSeat !== null &&
+        (existing.tableNumber !== reqTable || existing.seatNumber !== reqSeat)
+      ) {
+        const updated = await prisma.registration.update({
+          where: { id: existing.id },
+          data: {
+            tableNumber: reqTable,
+            seatNumber: reqSeat,
+          },
+          include: { event: true },
+        });
+        return { registration: updated, isNew: false };
+      }
       return { registration: existing, isNew: false };
     }
 
@@ -349,6 +448,8 @@ export async function createOrGetRegistration(data: {
         lastName: data.lastName.trim(),
         email: normalizedEmail,
         city: data.city.trim(),
+        tableNumber: reqTable,
+        seatNumber: reqSeat,
         status: "REGISTERED",
       },
       include: { event: true },
@@ -360,11 +461,33 @@ export async function createOrGetRegistration(data: {
       console.warn(
         "[Dev Fallback] Database not reachable, using in-memory store.",
       );
+
+      // Check if seat already taken in memory
+      if (reqTable !== null && reqSeat !== null) {
+        for (const reg of memoryRegistrations.values()) {
+          if (
+            reg.eventId === event.id &&
+            reg.tableNumber === reqTable &&
+            reg.seatNumber === reqSeat &&
+            reg.email.toLowerCase() !== normalizedEmail
+          ) {
+            throw new Error(
+              `Místo u stolu ${reqTable} (židle ${reqSeat}) bylo právě obsazeno jiným účastníkem. Vyberte si prosím jiné volné místo.`,
+            );
+          }
+        }
+      }
+
       for (const reg of memoryRegistrations.values()) {
         if (
           reg.eventId === event.id &&
           reg.email.toLowerCase() === normalizedEmail
         ) {
+          if (reqTable !== null && reqSeat !== null) {
+            reg.tableNumber = reqTable;
+            reg.seatNumber = reqSeat;
+            reg.updatedAt = new Date();
+          }
           return { registration: { ...reg, event }, isNew: false };
         }
       }
@@ -377,6 +500,8 @@ export async function createOrGetRegistration(data: {
         lastName: data.lastName.trim(),
         email: normalizedEmail,
         city: data.city.trim(),
+        tableNumber: reqTable,
+        seatNumber: reqSeat,
         status: "REGISTERED",
         attendedAt: null,
         createdAt: new Date(),
@@ -384,6 +509,189 @@ export async function createOrGetRegistration(data: {
       };
       memoryRegistrations.set(id, mockReg);
       return { registration: { ...mockReg, event }, isNew: true };
+    }
+    throw error;
+  }
+}
+
+export interface TableReservationStatus {
+  tableCount: number;
+  seatsPerTable: number;
+  reservedSeats: { tableNumber: number; seatNumber: number }[];
+}
+
+export async function getTableReservations(
+  eventId?: string,
+): Promise<TableReservationStatus> {
+  let event: Event | null = null;
+  if (eventId) {
+    event = await getEventByIdOrSlug(eventId);
+  }
+  if (!event) {
+    event = await ensureDefaultEvent();
+  }
+
+  const tableCount = event.tableCount || 6;
+  const seatsPerTable = event.seatsPerTable || 8;
+
+  try {
+    const list = await prisma.registration.findMany({
+      where: {
+        eventId: event.id,
+        tableNumber: { not: null },
+        seatNumber: { not: null },
+      },
+      select: {
+        tableNumber: true,
+        seatNumber: true,
+      },
+    });
+
+    const reservedSeats = list
+      .filter(
+        (r): r is { tableNumber: number; seatNumber: number } =>
+          r.tableNumber !== null && r.seatNumber !== null,
+      )
+      .map((r) => ({
+        tableNumber: r.tableNumber,
+        seatNumber: r.seatNumber,
+      }));
+
+    return {
+      tableCount,
+      seatsPerTable,
+      reservedSeats,
+    };
+  } catch (error) {
+    if (isPrismaConnectionError(error)) {
+      const reservedSeats: { tableNumber: number; seatNumber: number }[] = [];
+      for (const r of memoryRegistrations.values()) {
+        if (
+          r.eventId === event.id &&
+          r.tableNumber !== null &&
+          r.tableNumber !== undefined &&
+          r.seatNumber !== null &&
+          r.seatNumber !== undefined
+        ) {
+          reservedSeats.push({
+            tableNumber: r.tableNumber,
+            seatNumber: r.seatNumber,
+          });
+        }
+      }
+      return {
+        tableCount,
+        seatsPerTable,
+        reservedSeats,
+      };
+    }
+    throw error;
+  }
+}
+
+export interface SeatAssignmentInfo {
+  tableNumber: number;
+  seatNumber: number;
+  registration: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    city: string;
+    status: string;
+  };
+}
+
+export interface EventTableAssignments {
+  tableCount: number;
+  seatsPerTable: number;
+  assignments: SeatAssignmentInfo[];
+}
+
+export async function getEventTableAssignments(
+  eventId?: string,
+): Promise<EventTableAssignments> {
+  let event: Event | null = null;
+  if (eventId) {
+    event = await getEventByIdOrSlug(eventId);
+  }
+  if (!event) {
+    event = await ensureDefaultEvent();
+  }
+
+  const tableCount = event.tableCount || 6;
+  const seatsPerTable = event.seatsPerTable || 8;
+
+  try {
+    const list = await prisma.registration.findMany({
+      where: {
+        eventId: event.id,
+        tableNumber: { not: null },
+        seatNumber: { not: null },
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        city: true,
+        status: true,
+        tableNumber: true,
+        seatNumber: true,
+      },
+    });
+
+    return {
+      tableCount,
+      seatsPerTable,
+      assignments: list
+        .filter(
+          (r): r is typeof r & { tableNumber: number; seatNumber: number } =>
+            r.tableNumber !== null && r.seatNumber !== null,
+        )
+        .map((r) => ({
+          tableNumber: r.tableNumber,
+          seatNumber: r.seatNumber,
+          registration: {
+            id: r.id,
+            firstName: r.firstName,
+            lastName: r.lastName,
+            email: r.email,
+            city: r.city,
+            status: r.status,
+          },
+        })),
+    };
+  } catch (error) {
+    if (isPrismaConnectionError(error)) {
+      const assignments: SeatAssignmentInfo[] = [];
+      for (const r of memoryRegistrations.values()) {
+        if (
+          r.eventId === event.id &&
+          r.tableNumber !== null &&
+          r.tableNumber !== undefined &&
+          r.seatNumber !== null &&
+          r.seatNumber !== undefined
+        ) {
+          assignments.push({
+            tableNumber: r.tableNumber,
+            seatNumber: r.seatNumber,
+            registration: {
+              id: r.id,
+              firstName: r.firstName,
+              lastName: r.lastName,
+              email: r.email,
+              city: r.city,
+              status: r.status,
+            },
+          });
+        }
+      }
+      return {
+        tableCount,
+        seatsPerTable,
+        assignments,
+      };
     }
     throw error;
   }

@@ -54,7 +54,7 @@ async function RegistraceContent({
       {/* Decorative ambient glow */}
       <div className="pointer-events-none absolute top-10 left-1/2 -z-10 h-96 w-96 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,#b68235_0%,transparent_70%)] opacity-15 blur-3xl" />
 
-      <div className="mx-auto max-w-xl px-4 sm:px-6">
+      <div className="mx-auto max-w-3xl lg:max-w-4xl px-4 sm:px-6">
         {/* Back link */}
         <Link
           href="/"

@@ -20,6 +20,8 @@ interface TicketEmailProps {
   email: string;
   city: string;
   registrationId: string;
+  tableNumber?: number | null;
+  seatNumber?: number | null;
   qrCodeSrc?: string;
   qrCodeDataUrl?: string;
   ticketUrl: string;
@@ -32,6 +34,8 @@ export function TicketEmail({
   email = "jan.novak@example.cz",
   city = "Prostějov",
   registrationId = "c796b34a-95ee-46a4-97c3-30528e188f57",
+  tableNumber,
+  seatNumber,
   qrCodeSrc,
   qrCodeDataUrl = "",
   ticketUrl = "http://localhost:3000/registrace/uspech?id=test",
@@ -114,6 +118,16 @@ export function TicketEmail({
               </Text>
               <Text style={detailRow}>
                 <strong>Kde:</strong> Brodek u Prostějova (kostel & hasičárna)
+              </Text>
+              <Text style={detailRow}>
+                <strong>Místo u stolu:</strong>{" "}
+                {tableNumber && seatNumber ? (
+                  <span style={{ color: "#d4af37", fontWeight: "bold" }}>
+                    Stůl {tableNumber} • Místo {seatNumber}
+                  </span>
+                ) : (
+                  <span>Bez rezervace stolu (volné stání / tanec)</span>
+                )}
               </Text>
               <Text style={detailRow}>
                 <strong>Kód registrace:</strong>{" "}

@@ -23,6 +23,8 @@ model Event {
   date          DateTime?
   location      String?
   isActive      Boolean        @default(true)
+  tableCount    Int            @default(6)
+  seatsPerTable Int            @default(8)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   registrations Registration[]
@@ -32,20 +34,23 @@ model Event {
 }
 
 model Registration {
-  id         String             @id @default(uuid())
-  eventId    String
-  event      Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  firstName  String
-  lastName   String
-  email      String
-  city       String
-  status     RegistrationStatus @default(REGISTERED)
-  attendedAt DateTime?
-  createdAt  DateTime           @default(now())
-  updatedAt  DateTime           @updatedAt
+  id          String             @id @default(uuid())
+  eventId     String
+  event       Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  firstName   String
+  lastName    String
+  email       String
+  city        String
+  tableNumber Int?
+  seatNumber  Int?
+  status      RegistrationStatus @default(REGISTERED)
+  attendedAt  DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 
   @@unique([eventId, email])
   @@index([eventId])
   @@index([email])
   @@index([status])
+  @@index([eventId, tableNumber, seatNumber])
 }

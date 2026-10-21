@@ -48,6 +48,12 @@ export function Navbar() {
             Harmonogram
           </Link>
           <Link
+            href="/#stoly"
+            className="rounded-md px-3.5 py-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors whitespace-nowrap"
+          >
+            Plán sálu & Stoly
+          </Link>
+          <Link
             href="/#tombola"
             className="rounded-md px-3.5 py-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors whitespace-nowrap"
           >
@@ -106,6 +112,13 @@ export function Navbar() {
               className="rounded-md px-3 py-2 text-base text-foreground hover:bg-muted"
             >
               Harmonogram večera
+            </Link>
+            <Link
+              href="/#stoly"
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-md px-3 py-2 text-base text-foreground hover:bg-muted"
+            >
+              Plán sálu & rezervace stolů
             </Link>
             <Link
               href="/#tombola"

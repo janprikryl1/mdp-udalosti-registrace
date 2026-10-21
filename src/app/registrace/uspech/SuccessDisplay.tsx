@@ -2,6 +2,7 @@
 
 import confetti from "canvas-confetti";
 import {
+  Armchair,
   ArrowLeft,
   Calendar,
   CheckCircle2,
@@ -29,6 +30,8 @@ interface RegistrationData {
   lastName: string;
   email: string;
   city: string;
+  tableNumber?: number | null;
+  seatNumber?: number | null;
   status: string;
   createdAt: string;
 }
@@ -166,6 +169,20 @@ export function SuccessDisplay({
             <strong className="text-foreground">{registration.city}</strong>
           </span>
         </p>
+
+        {registration.tableNumber && registration.seatNumber ? (
+          <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-primary/50 bg-primary/20 px-4 py-1 text-xs font-semibold text-primary">
+            <Armchair className="h-3.5 w-3.5" />
+            <span>
+              Místo u stolu: Stůl {registration.tableNumber} • Místo{" "}
+              {registration.seatNumber}
+            </span>
+          </div>
+        ) : (
+          <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-muted/30 bg-muted/20 px-3.5 py-0.5 text-xs text-muted-foreground">
+            <span>Bez rezervace stolu (volné stání & tanec)</span>
+          </div>
+        )}
 
         {/* Diamond separator */}
         <div className="diamond-separator my-4">
