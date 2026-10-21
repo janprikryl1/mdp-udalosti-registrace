@@ -1,12 +1,23 @@
 import type { Event, Registration } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
+export type AppEvent = Event & {
+  tableCount?: number;
+  seatsPerTable?: number;
+};
+
+export type AppRegistration = Registration & {
+  tableNumber?: number | null;
+  seatNumber?: number | null;
+  event?: AppEvent;
+};
+
 // In-memory fallback cache for offline dev if Postgres is not yet configured locally
-const memoryEvents = new Map<string, Event>();
-const memoryRegistrations = new Map<string, Registration>();
+const memoryEvents = new Map<string, AppEvent>();
+const memoryRegistrations = new Map<string, AppRegistration>();
 
 const DEFAULT_EVENT_ID = "00000000-0000-0000-0000-000000000001";
-const DEFAULT_EVENT: Event = {
+const DEFAULT_EVENT: AppEvent = {
   id: DEFAULT_EVENT_ID,
   slug: "cirkevni-silvestr-2026",
   title: "Církevní Silvestr 2026 – Malý princ",
@@ -51,17 +62,17 @@ export type CheckinResult =
   | {
       status: "SUCCESS";
       message: string;
-      registration: Registration & { event?: Event };
+      registration: AppRegistration & { event?: AppEvent };
     }
   | {
       status: "ALREADY_CHECKED_IN";
       message: string;
-      registration: Registration & { event?: Event };
+      registration: AppRegistration & { event?: AppEvent };
     }
   | {
       status: "WRONG_EVENT";
       message: string;
-      registration: Registration & { event?: Event };
+      registration: AppRegistration & { event?: AppEvent };
     }
   | {
       status: "NOT_FOUND";
@@ -75,10 +86,10 @@ export interface CheckinStats {
   total: number;
   attended: number;
   remaining: number;
-  recentAttended: (Registration & { event?: Event })[];
+  recentAttended: (AppRegistration & { event?: AppEvent })[];
 }
 
-export interface EventWithCounts extends Event {
+export interface EventWithCounts extends AppEvent {
   _count?: {
     registrations: number;
   };
@@ -87,12 +98,12 @@ export interface EventWithCounts extends Event {
 }
 
 // Ensure at least one default event exists in DB
-export async function ensureDefaultEvent(): Promise<Event> {
+export async function ensureDefaultEvent(): Promise<AppEvent> {
   try {
-    let event = await prisma.event.findFirst({
+    let event = (await prisma.event.findFirst({
       where: { isActive: true },
       orderBy: { createdAt: "asc" },
-    });
+    })) as AppEvent | null;
 
     if (!event) {
       event = await prisma.event.create({
@@ -254,7 +265,7 @@ export async function createEvent(data: {
 export async function updateEventTableCount(
   id: string,
   tableCount: number,
-): Promise<Event | null> {
+): Promise<AppEvent | null> {
   const count = Math.max(1, Math.min(50, tableCount));
   try {
     return await prisma.event.update({
@@ -359,11 +370,14 @@ export async function createOrGetRegistration(data: {
   city: string;
   tableNumber?: number | null;
   seatNumber?: number | null;
-}): Promise<{ registration: Registration & { event: Event }; isNew: boolean }> {
+}): Promise<{
+  registration: AppRegistration & { event: AppEvent };
+  isNew: boolean;
+}> {
   const normalizedEmail = data.email.trim().toLowerCase();
 
   // Resolve event
-  let event: Event | null = null;
+  let event: AppEvent | null = null;
   if (data.eventId) {
     event = await getEventByIdOrSlug(data.eventId);
   }
@@ -436,9 +450,15 @@ export async function createOrGetRegistration(data: {
           },
           include: { event: true },
         });
-        return { registration: updated, isNew: false };
+        return {
+          registration: updated,
+          isNew: false,
+        };
       }
-      return { registration: existing, isNew: false };
+      return {
+        registration: existing,
+        isNew: false,
+      };
     }
 
     const created = await prisma.registration.create({
@@ -455,7 +475,10 @@ export async function createOrGetRegistration(data: {
       include: { event: true },
     });
 
-    return { registration: created, isNew: true };
+    return {
+      registration: created,
+      isNew: true,
+    };
   } catch (error) {
     if (isPrismaConnectionError(error)) {
       console.warn(
@@ -493,7 +516,7 @@ export async function createOrGetRegistration(data: {
       }
 
       const id = crypto.randomUUID();
-      const mockReg: Registration = {
+      const mockReg: AppRegistration = {
         id,
         eventId: event.id,
         firstName: data.firstName.trim(),
@@ -523,7 +546,7 @@ export interface TableReservationStatus {
 export async function getTableReservations(
   eventId?: string,
 ): Promise<TableReservationStatus> {
-  let event: Event | null = null;
+  let event: AppEvent | null = null;
   if (eventId) {
     event = await getEventByIdOrSlug(eventId);
   }
@@ -547,15 +570,20 @@ export async function getTableReservations(
       },
     });
 
-    const reservedSeats = list
-      .filter(
-        (r): r is { tableNumber: number; seatNumber: number } =>
-          r.tableNumber !== null && r.seatNumber !== null,
-      )
-      .map((r) => ({
-        tableNumber: r.tableNumber,
-        seatNumber: r.seatNumber,
-      }));
+    const reservedSeats: { tableNumber: number; seatNumber: number }[] = [];
+    for (const r of list) {
+      if (
+        r.tableNumber !== null &&
+        r.tableNumber !== undefined &&
+        r.seatNumber !== null &&
+        r.seatNumber !== undefined
+      ) {
+        reservedSeats.push({
+          tableNumber: r.tableNumber,
+          seatNumber: r.seatNumber,
+        });
+      }
+    }
 
     return {
       tableCount,
@@ -574,8 +602,8 @@ export async function getTableReservations(
           r.seatNumber !== undefined
         ) {
           reservedSeats.push({
-            tableNumber: r.tableNumber,
-            seatNumber: r.seatNumber,
+            tableNumber: Number(r.tableNumber),
+            seatNumber: Number(r.seatNumber),
           });
         }
       }
@@ -611,7 +639,7 @@ export interface EventTableAssignments {
 export async function getEventTableAssignments(
   eventId?: string,
 ): Promise<EventTableAssignments> {
-  let event: Event | null = null;
+  let event: AppEvent | null = null;
   if (eventId) {
     event = await getEventByIdOrSlug(eventId);
   }
@@ -641,15 +669,15 @@ export async function getEventTableAssignments(
       },
     });
 
-    return {
-      tableCount,
-      seatsPerTable,
-      assignments: list
-        .filter(
-          (r): r is typeof r & { tableNumber: number; seatNumber: number } =>
-            r.tableNumber !== null && r.seatNumber !== null,
-        )
-        .map((r) => ({
+    const assignments: SeatAssignmentInfo[] = [];
+    for (const r of list) {
+      if (
+        r.tableNumber !== null &&
+        r.tableNumber !== undefined &&
+        r.seatNumber !== null &&
+        r.seatNumber !== undefined
+      ) {
+        assignments.push({
           tableNumber: r.tableNumber,
           seatNumber: r.seatNumber,
           registration: {
@@ -660,7 +688,14 @@ export async function getEventTableAssignments(
             city: r.city,
             status: r.status,
           },
-        })),
+        });
+      }
+    }
+
+    return {
+      tableCount,
+      seatsPerTable,
+      assignments,
     };
   } catch (error) {
     if (isPrismaConnectionError(error)) {
@@ -674,8 +709,8 @@ export async function getEventTableAssignments(
           r.seatNumber !== undefined
         ) {
           assignments.push({
-            tableNumber: r.tableNumber,
-            seatNumber: r.seatNumber,
+            tableNumber: Number(r.tableNumber),
+            seatNumber: Number(r.seatNumber),
             registration: {
               id: r.id,
               firstName: r.firstName,
@@ -699,12 +734,12 @@ export async function getEventTableAssignments(
 
 export async function getRegistrationById(
   id: string,
-): Promise<(Registration & { event: Event }) | null> {
+): Promise<(AppRegistration & { event: AppEvent }) | null> {
   try {
-    return await prisma.registration.findUnique({
+    return (await prisma.registration.findUnique({
       where: { id },
       include: { event: true },
-    });
+    })) as (AppRegistration & { event: AppEvent }) | null;
   } catch (error) {
     if (isPrismaConnectionError(error)) {
       const reg = memoryRegistrations.get(id);
@@ -792,14 +827,14 @@ export async function checkinParticipant(
     return {
       status: "SUCCESS",
       message: `Platná registrace (${updated.event.title}): ${updated.firstName} ${updated.lastName}, vítejte! Můžou jít.`,
-      registration: updated,
+      registration: updated as AppRegistration & { event: AppEvent },
     };
   } catch (error) {
     if (isPrismaConnectionError(error)) {
       console.warn(
         "[Dev Fallback] Database not reachable, using in-memory checkin.",
       );
-      let found: Registration | undefined = memoryRegistrations.get(cleaned);
+      let found: AppRegistration | undefined = memoryRegistrations.get(cleaned);
 
       if (!found) {
         for (const reg of memoryRegistrations.values()) {
@@ -854,16 +889,16 @@ export async function checkinParticipant(
 
 export async function revertCheckin(
   id: string,
-): Promise<(Registration & { event?: Event }) | null> {
+): Promise<(AppRegistration & { event?: AppEvent }) | null> {
   try {
-    return await prisma.registration.update({
+    return (await prisma.registration.update({
       where: { id },
       data: {
         status: "REGISTERED",
         attendedAt: null,
       },
       include: { event: true },
-    });
+    })) as (AppRegistration & { event?: AppEvent }) | null;
   } catch (error) {
     if (isPrismaConnectionError(error)) {
       const reg = memoryRegistrations.get(id);
@@ -914,7 +949,9 @@ export async function getCheckinStats(
       total,
       attended,
       remaining: Math.max(0, total - attended),
-      recentAttended,
+      recentAttended: recentAttended as (AppRegistration & {
+        event?: AppEvent;
+      })[],
     };
   } catch (error) {
     if (isPrismaConnectionError(error)) {
@@ -951,12 +988,12 @@ export async function getCheckinStats(
 export async function searchRegistrations(
   query: string,
   targetEventId?: string,
-): Promise<(Registration & { event?: Event })[]> {
+): Promise<(AppRegistration & { event?: AppEvent })[]> {
   const cleaned = query.trim();
   if (!cleaned) return [];
 
   try {
-    return await prisma.registration.findMany({
+    return (await prisma.registration.findMany({
       where: {
         ...(targetEventId ? { eventId: targetEventId } : {}),
         OR: [
@@ -970,7 +1007,7 @@ export async function searchRegistrations(
       take: 10,
       orderBy: { createdAt: "desc" },
       include: { event: true },
-    });
+    })) as (AppRegistration & { event?: AppEvent })[];
   } catch (error) {
     if (isPrismaConnectionError(error)) {
       const q = cleaned.toLowerCase();
