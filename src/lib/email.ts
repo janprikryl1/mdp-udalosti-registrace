@@ -1,10 +1,8 @@
 import { render } from "@react-email/components";
-import { Resend } from "resend";
 import { TicketEmail } from "@/emails/TicketEmail";
 import { generateQRCodeBuffer } from "./qrcode";
 
-const resendApiKey = process.env.RESEND_API_KEY;
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
+const brevoApiKey = process.env.BREVO_API_KEY;
 
 export interface SendTicketEmailParams {
   eventName?: string;
@@ -19,12 +17,16 @@ export interface SendTicketEmailParams {
   qrCodeBuffer?: Buffer;
 }
 
-export async function sendTicketEmail(params: SendTicketEmailParams): Promise<{
+export interface SendTicketEmailResult {
   success: boolean;
   id?: string;
   simulated?: boolean;
   error?: string;
-}> {
+}
+
+export async function sendTicketEmail(
+  params: SendTicketEmailParams,
+): Promise<SendTicketEmailResult> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const ticketUrl = `${appUrl}/registrace/uspech?id=${params.registrationId}`;
   const eventTitle = params.eventName || "Církevní Silvestr";
@@ -56,42 +58,59 @@ export async function sendTicketEmail(params: SendTicketEmailParams): Promise<{
         registrationId: params.registrationId,
         tableNumber: params.tableNumber,
         seatNumber: params.seatNumber,
-        qrCodeSrc: "cid:ticket-qr-code",
+        qrCodeSrc: `${appUrl}/api/qr/${params.registrationId}.png`,
         ticketUrl,
       }),
     );
 
-    if (!resend) {
+    if (!brevoApiKey) {
       console.log(
-        `[Email Simulation] RESEND_API_KEY is not set. Ticket email (${eventTitle}) for ${params.email} (${params.firstName} ${params.lastName}) simulated. URL: ${ticketUrl}`,
+        `[Email Simulation] BREVO_API_KEY is not set. Ticket email (${eventTitle}) for ${params.email} (${params.firstName} ${params.lastName}) simulated. URL: ${ticketUrl}`,
       );
       return { success: true, simulated: true };
     }
 
-    const fromAddress =
-      process.env.EMAIL_FROM || "Církevní Silvestr <onboarding@resend.dev>";
+    const configuredSender =
+      process.env.EMAIL_FROM || "Církevní Silvestr <tickets@example.com>";
+    const senderMatch = configuredSender.match(/^(.*)<([^<>]+)>$/);
+    const sender = senderMatch
+      ? { name: senderMatch[1].trim(), email: senderMatch[2].trim() }
+      : { email: configuredSender.trim() };
 
-    const { data, error } = await resend.emails.send({
-      from: fromAddress,
-      to: params.email,
-      subject: `Potvrzení registrace na ${eventTitle} (vstupní QR kód)`,
-      html,
-      attachments: [
-        {
-          filename: `vstupenka-qr-${params.registrationId.slice(0, 8)}.png`,
-          content: base64Image,
-          contentType: "image/png",
-          contentId: "ticket-qr-code",
-        },
-      ],
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "api-key": brevoApiKey,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        sender,
+        to: [{ email: params.email, name: `${params.firstName} ${params.lastName}` }],
+        subject: `Potvrzení registrace na ${eventTitle} (vstupní QR kód)`,
+        htmlContent: html,
+        attachment: [
+          {
+            name: `vstupenka-qr-${params.registrationId.slice(0, 8)}.png`,
+            content: base64Image,
+          },
+        ],
+      }),
     });
 
-    if (error) {
-      console.error("[Resend Error]", error);
-      return { success: false, error: error.message };
+    const result = (await response.json().catch(() => ({}))) as {
+      messageId?: string;
+      message?: string;
+      code?: string;
+    };
+
+    if (!response.ok) {
+      const error = result.message || `Brevo API returned HTTP ${response.status}`;
+      console.error("[Brevo Error]", { status: response.status, error });
+      return { success: false, error };
     }
 
-    return { success: true, id: data?.id };
+    return { success: true, id: result.messageId };
   } catch (error) {
     console.error("[Email Send Error]", error);
     return {

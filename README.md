@@ -1,6 +1,6 @@
 # QR Entry
 
-A modern, high-throughput multi-event participant registration and QR admission system. Built with Next.js (App Router), TypeScript, Tailwind CSS, Prisma ORM, and Resend.
+A modern, high-throughput multi-event participant registration and QR admission system. Built with Next.js (App Router), TypeScript, Tailwind CSS, Prisma ORM, and Brevo.
 
 The application allows organizers to manage multiple events, accept attendee registrations, dispatch tickets with inline QR codes via email, and rapidly admit attendees at entrances using a mobile or desktop camera scanner.
 
@@ -16,7 +16,7 @@ The application allows organizers to manage multiple events, accept attendee reg
 ### Public Registration & Ticketing
 - **Registration Form:** Validated using `react-hook-form` and `zod`, capturing participant details (name, email, parish/residence) and associating them with the active event.
 - **Instant Digital Pass:** Directs confirmed attendees to a dedicated ticket page (`/registrace/uspech?id=...`) displaying the participant pass, downloadable PNG QR code, and `.ics` calendar invitation.
-- **Email Delivery:** Dispatches confirmation emails via the Resend API using React Email templates. QR codes are embedded as inline MIME attachments using Content-ID (`cid:ticket-qr-code`) to guarantee rendering across email clients that block base64 data URIs (such as Gmail).
+- **Email Delivery:** Dispatches confirmation emails via the Brevo transactional email API using React Email templates. QR codes are included as attachments.
 
 ### Check-in Terminal (`/checkin`)
 - **Protected Access:** Secured with password-based authentication and signed HTTP-only JWT session cookies using `jose`.
@@ -39,7 +39,7 @@ The application allows organizers to manage multiple events, accept attendee reg
 | Language | TypeScript |
 | Styling | Tailwind CSS, Lucide React icons, Radix UI primitives |
 | Database & ORM | PostgreSQL, Prisma ORM (with in-memory offline fallback) |
-| Email Service | Resend SDK, React Email (`@react-email/components`) |
+| Email Service | Brevo transactional email API, React Email (`@react-email/components`) |
 | QR Code Engine | `qrcode` (generation), `html5-qrcode` (camera scanning) |
 | Security | `jose` (JWT cookie sessions) |
 | Linter & Formatter | Biome (`@biomejs/biome`) |
@@ -73,7 +73,7 @@ qr-entry/
 │   │   └── TicketEmail.tsx        # React Email template for participant confirmation
 │   └── lib/
 │       ├── auth.ts                # Session token signing and verification
-│       ├── email.ts               # Resend email client with inline MIME attachments
+│       ├── email.ts               # Brevo email client with QR code attachments
 │       ├── prisma.ts              # Prisma database client singleton
 │       ├── qrcode.ts              # QR code generation (Data URL and Buffer)
 │       ├── registrations.ts       # Registration and event service layer
@@ -99,8 +99,8 @@ cp .env.example .env
 |---|---|---|
 | `POSTGRES_PRISMA_URL` | PostgreSQL connection string (pooling) | `postgresql://...` |
 | `POSTGRES_URL_NON_POOLING` | Direct PostgreSQL connection string | `postgresql://...` |
-| `RESEND_API_KEY` | Resend API key for outbound emails | `re_...` |
-| `EMAIL_FROM` | Sender display name and email address | `Event Team <onboarding@resend.dev>` |
+| `BREVO_API_KEY` | Brevo API key for outbound emails | `xkeysib-...` |
+| `EMAIL_FROM` | Verified sender display name and email address | `Event Team <tickets@example.com>` |
 | `ADMIN_PASSWORD` | Password for accessing the `/checkin` terminal | `change-me-to-a-secure-password` |
 | `AUTH_SECRET` | Secret key for signing session tokens (min. 32 chars) | `your-secure-random-auth-secret` |
 | `NEXT_PUBLIC_APP_URL` | Public base URL of the deployment | `http://localhost:3000` |
@@ -163,7 +163,7 @@ If no database connection string is provided during local development, the appli
 3. Configure the remaining environment variables in the project settings:
    - `ADMIN_PASSWORD`
    - `AUTH_SECRET`
-   - `RESEND_API_KEY`
+   - `BREVO_API_KEY`
    - `EMAIL_FROM`
    - `NEXT_PUBLIC_APP_URL` (set to your production domain)
 4. Trigger the deployment.

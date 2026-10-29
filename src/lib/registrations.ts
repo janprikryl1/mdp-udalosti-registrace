@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import type { Event, Registration } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
@@ -12,9 +14,12 @@ export type AppRegistration = Registration & {
   event?: AppEvent;
 };
 
-// In-memory fallback cache for offline dev if Postgres is not yet configured locally
-const memoryEvents = new Map<string, AppEvent>();
-const memoryRegistrations = new Map<string, AppRegistration>();
+const DEV_STORE_PATH = path.join(process.cwd(), "prisma", "dev-store.json");
+
+interface DevStoreData {
+  events: AppEvent[];
+  registrations: AppRegistration[];
+}
 
 const DEFAULT_EVENT_ID = "00000000-0000-0000-0000-000000000001";
 const DEFAULT_EVENT: AppEvent = {
@@ -31,7 +36,101 @@ const DEFAULT_EVENT: AppEvent = {
   createdAt: new Date(),
   updatedAt: new Date(),
 };
-memoryEvents.set(DEFAULT_EVENT_ID, DEFAULT_EVENT);
+
+let lastStoreMtime = 0;
+
+function syncDevStore(): {
+  memoryEvents: Map<string, AppEvent>;
+  memoryRegistrations: Map<string, AppRegistration>;
+} {
+  const globalStore = globalThis as unknown as {
+    __qrDevEvents?: Map<string, AppEvent>;
+    __qrDevRegistrations?: Map<string, AppRegistration>;
+  };
+
+  let needsReload =
+    !globalStore.__qrDevEvents || !globalStore.__qrDevRegistrations;
+
+  if (fs.existsSync(DEV_STORE_PATH)) {
+    try {
+      const stat = fs.statSync(DEV_STORE_PATH);
+      if (stat.mtimeMs > lastStoreMtime) {
+        needsReload = true;
+        lastStoreMtime = stat.mtimeMs;
+      }
+    } catch {
+      // ignore stat errors
+    }
+  }
+
+  if (needsReload) {
+    const eventsMap = new Map<string, AppEvent>();
+    const registrationsMap = new Map<string, AppRegistration>();
+
+    eventsMap.set(DEFAULT_EVENT_ID, {
+      ...DEFAULT_EVENT,
+      date: new Date("2026-11-28T18:00:00Z"),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    if (fs.existsSync(DEV_STORE_PATH)) {
+      try {
+        const raw = fs.readFileSync(DEV_STORE_PATH, "utf-8");
+        const parsed: DevStoreData = JSON.parse(raw);
+        if (Array.isArray(parsed.events)) {
+          for (const ev of parsed.events) {
+            eventsMap.set(ev.id, {
+              ...ev,
+              date: ev.date ? new Date(ev.date) : null,
+              createdAt: new Date(ev.createdAt),
+              updatedAt: new Date(ev.updatedAt),
+            });
+          }
+        }
+        if (Array.isArray(parsed.registrations)) {
+          for (const reg of parsed.registrations) {
+            registrationsMap.set(reg.id, {
+              ...reg,
+              attendedAt: reg.attendedAt ? new Date(reg.attendedAt) : null,
+              createdAt: new Date(reg.createdAt),
+              updatedAt: new Date(reg.updatedAt),
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("[Dev Store] Failed to read dev-store.json:", err);
+      }
+    }
+
+    globalStore.__qrDevEvents = eventsMap;
+    globalStore.__qrDevRegistrations = registrationsMap;
+  }
+
+  return {
+    memoryEvents: globalStore.__qrDevEvents!,
+    memoryRegistrations: globalStore.__qrDevRegistrations!,
+  };
+}
+
+function persistDevStore(): void {
+  try {
+    const { memoryEvents, memoryRegistrations } = syncDevStore();
+    const data: DevStoreData = {
+      events: Array.from(memoryEvents.values()),
+      registrations: Array.from(memoryRegistrations.values()),
+    };
+    const dir = path.dirname(DEV_STORE_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(DEV_STORE_PATH, JSON.stringify(data, null, 2), "utf-8");
+    const stat = fs.statSync(DEV_STORE_PATH);
+    lastStoreMtime = stat.mtimeMs;
+  } catch (err) {
+    console.warn("[Dev Store] Failed to persist dev-store.json:", err);
+  }
+}
 
 function isPrismaConnectionError(error: unknown): boolean {
   if (typeof error === "object" && error !== null) {
@@ -160,6 +259,7 @@ export async function getAllEvents(): Promise<EventWithCounts[]> {
     }));
   } catch (error) {
     if (isPrismaConnectionError(error)) {
+      const { memoryEvents, memoryRegistrations } = syncDevStore();
       const allEvents = Array.from(memoryEvents.values());
       return allEvents.map((e) => {
         const regs = Array.from(memoryRegistrations.values()).filter(
@@ -187,6 +287,7 @@ export async function getEventByIdOrSlug(
     });
   } catch (error) {
     if (isPrismaConnectionError(error)) {
+      const { memoryEvents } = syncDevStore();
       for (const e of memoryEvents.values()) {
         if (e.id === idOrSlug || e.slug === idOrSlug.toLowerCase()) {
           return e;
@@ -241,6 +342,7 @@ export async function createEvent(data: {
     });
   } catch (error) {
     if (isPrismaConnectionError(error)) {
+      const { memoryEvents } = syncDevStore();
       const id = crypto.randomUUID();
       const newEvent: Event = {
         id,
@@ -256,6 +358,7 @@ export async function createEvent(data: {
         updatedAt: new Date(),
       };
       memoryEvents.set(id, newEvent);
+      persistDevStore();
       return newEvent;
     }
     throw error;
@@ -274,10 +377,12 @@ export async function updateEventTableCount(
     });
   } catch (error) {
     if (isPrismaConnectionError(error)) {
+      const { memoryEvents } = syncDevStore();
       const event = memoryEvents.get(id);
       if (event) {
         event.tableCount = count;
         event.updatedAt = new Date();
+        persistDevStore();
         return event;
       }
       return null;
@@ -296,9 +401,11 @@ export async function toggleEventActive(id: string): Promise<Event | null> {
     });
   } catch (error) {
     if (isPrismaConnectionError(error)) {
+      const { memoryEvents } = syncDevStore();
       const event = memoryEvents.get(id);
       if (event) {
         event.isActive = !event.isActive;
+        persistDevStore();
         return event;
       }
       return null;
@@ -313,12 +420,14 @@ export async function deleteEvent(id: string): Promise<boolean> {
     return true;
   } catch (error) {
     if (isPrismaConnectionError(error)) {
+      const { memoryEvents, memoryRegistrations } = syncDevStore();
       memoryEvents.delete(id);
       for (const [regId, reg] of memoryRegistrations.entries()) {
         if (reg.eventId === id) {
           memoryRegistrations.delete(regId);
         }
       }
+      persistDevStore();
       return true;
     }
     throw error;
@@ -336,6 +445,7 @@ export async function getEventRegistrations(
     });
   } catch (error) {
     if (isPrismaConnectionError(error)) {
+      const { memoryEvents, memoryRegistrations } = syncDevStore();
       const list = Array.from(memoryRegistrations.values()).filter(
         (r) => !eventId || r.eventId === eventId,
       );
@@ -356,7 +466,10 @@ export async function deleteRegistration(id: string): Promise<boolean> {
     return true;
   } catch (error) {
     if (isPrismaConnectionError(error)) {
-      return memoryRegistrations.delete(id);
+      const { memoryRegistrations } = syncDevStore();
+      const deleted = memoryRegistrations.delete(id);
+      persistDevStore();
+      return deleted;
     }
     throw error;
   }
@@ -410,24 +523,24 @@ export async function createOrGetRegistration(data: {
   }
 
   try {
-    // Check if table + seat is already taken
+    // 1. Check if table + seat is already taken by anyone
     if (reqTable !== null && reqSeat !== null) {
       const occupied = await prisma.registration.findFirst({
         where: {
           eventId: event.id,
           tableNumber: reqTable,
           seatNumber: reqSeat,
-          NOT: { email: { equals: normalizedEmail, mode: "insensitive" } },
         },
       });
 
       if (occupied) {
         throw new Error(
-          `Místo u stolu ${reqTable} (židle ${reqSeat}) bylo právě obsazeno jiným účastníkem. Vyberte si prosím jiné volné místo.`,
+          `Místo u stolu ${reqTable} (židle ${reqSeat}) je již obsazeno jiným účastníkem. Vyberte si prosím jiné volné místo.`,
         );
       }
     }
 
+    // 2. Check if this email is already registered for this event
     const existing = await prisma.registration.findFirst({
       where: {
         eventId: event.id,
@@ -437,28 +550,16 @@ export async function createOrGetRegistration(data: {
     });
 
     if (existing) {
-      if (
-        reqTable !== null &&
-        reqSeat !== null &&
-        (existing.tableNumber !== reqTable || existing.seatNumber !== reqSeat)
-      ) {
-        const updated = await prisma.registration.update({
-          where: { id: existing.id },
-          data: {
-            tableNumber: reqTable,
-            seatNumber: reqSeat,
-          },
-          include: { event: true },
-        });
-        return {
-          registration: updated,
-          isNew: false,
-        };
-      }
-      return {
-        registration: existing,
-        isNew: false,
-      };
+      const seatInfo =
+        existing.tableNumber && existing.seatNumber
+          ? ` (Stůl ${existing.tableNumber}, místo ${existing.seatNumber})`
+          : " (bez rezervace stolu)";
+
+      const duplicateError = new Error(
+        `Účastník s e-mailem "${normalizedEmail}" je již na tuto akci zaregistrován (${existing.firstName} ${existing.lastName}${seatInfo}). Pro registraci další osoby zadejte prosím její vlastní e-mail.`,
+      );
+      (duplicateError as unknown as { existingRegistrationId: string }).existingRegistrationId = existing.id;
+      throw duplicateError;
     }
 
     const created = await prisma.registration.create({
@@ -482,36 +583,42 @@ export async function createOrGetRegistration(data: {
   } catch (error) {
     if (isPrismaConnectionError(error)) {
       console.warn(
-        "[Dev Fallback] Database not reachable, using in-memory store.",
+        "[Dev Fallback] Database not reachable, using persistent dev store.",
       );
 
-      // Check if seat already taken in memory
+      const { memoryRegistrations } = syncDevStore();
+
+      // Check if table + seat is already taken in dev store
       if (reqTable !== null && reqSeat !== null) {
         for (const reg of memoryRegistrations.values()) {
           if (
             reg.eventId === event.id &&
             reg.tableNumber === reqTable &&
-            reg.seatNumber === reqSeat &&
-            reg.email.toLowerCase() !== normalizedEmail
+            reg.seatNumber === reqSeat
           ) {
             throw new Error(
-              `Místo u stolu ${reqTable} (židle ${reqSeat}) bylo právě obsazeno jiným účastníkem. Vyberte si prosím jiné volné místo.`,
+              `Místo u stolu ${reqTable} (židle ${reqSeat}) je již obsazeno jiným účastníkem. Vyberte si prosím jiné volné místo.`,
             );
           }
         }
       }
 
+      // Check if email is already registered in dev store
       for (const reg of memoryRegistrations.values()) {
         if (
           reg.eventId === event.id &&
           reg.email.toLowerCase() === normalizedEmail
         ) {
-          if (reqTable !== null && reqSeat !== null) {
-            reg.tableNumber = reqTable;
-            reg.seatNumber = reqSeat;
-            reg.updatedAt = new Date();
-          }
-          return { registration: { ...reg, event }, isNew: false };
+          const seatInfo =
+            reg.tableNumber && reg.seatNumber
+              ? ` (Stůl ${reg.tableNumber}, místo ${reg.seatNumber})`
+              : " (bez rezervace stolu)";
+
+          const duplicateError = new Error(
+            `Účastník s e-mailem "${normalizedEmail}" je již na tuto akci zaregistrován (${reg.firstName} ${reg.lastName}${seatInfo}). Pro registraci další osoby zadejte prosím její vlastní e-mail.`,
+          );
+          (duplicateError as unknown as { existingRegistrationId: string }).existingRegistrationId = reg.id;
+          throw duplicateError;
         }
       }
 
@@ -531,6 +638,8 @@ export async function createOrGetRegistration(data: {
         updatedAt: new Date(),
       };
       memoryRegistrations.set(id, mockReg);
+      persistDevStore();
+
       return { registration: { ...mockReg, event }, isNew: true };
     }
     throw error;
@@ -592,6 +701,7 @@ export async function getTableReservations(
     };
   } catch (error) {
     if (isPrismaConnectionError(error)) {
+      const { memoryRegistrations } = syncDevStore();
       const reservedSeats: { tableNumber: number; seatNumber: number }[] = [];
       for (const r of memoryRegistrations.values()) {
         if (
@@ -699,6 +809,7 @@ export async function getEventTableAssignments(
     };
   } catch (error) {
     if (isPrismaConnectionError(error)) {
+      const { memoryRegistrations } = syncDevStore();
       const assignments: SeatAssignmentInfo[] = [];
       for (const r of memoryRegistrations.values()) {
         if (
@@ -742,6 +853,7 @@ export async function getRegistrationById(
     })) as (AppRegistration & { event: AppEvent }) | null;
   } catch (error) {
     if (isPrismaConnectionError(error)) {
+      const { memoryEvents, memoryRegistrations } = syncDevStore();
       const reg = memoryRegistrations.get(id);
       if (!reg) return null;
       const event = memoryEvents.get(reg.eventId) || DEFAULT_EVENT;
@@ -834,6 +946,7 @@ export async function checkinParticipant(
       console.warn(
         "[Dev Fallback] Database not reachable, using in-memory checkin.",
       );
+      const { memoryEvents, memoryRegistrations } = syncDevStore();
       let found: AppRegistration | undefined = memoryRegistrations.get(cleaned);
 
       if (!found) {
@@ -876,6 +989,7 @@ export async function checkinParticipant(
       found.attendedAt = new Date();
       found.updatedAt = new Date();
       memoryRegistrations.set(found.id, found);
+      persistDevStore();
 
       return {
         status: "SUCCESS",
@@ -901,12 +1015,14 @@ export async function revertCheckin(
     })) as (AppRegistration & { event?: AppEvent }) | null;
   } catch (error) {
     if (isPrismaConnectionError(error)) {
+      const { memoryEvents, memoryRegistrations } = syncDevStore();
       const reg = memoryRegistrations.get(id);
       if (reg) {
         reg.status = "REGISTERED";
         reg.attendedAt = null;
         reg.updatedAt = new Date();
         memoryRegistrations.set(id, reg);
+        persistDevStore();
         const event = memoryEvents.get(reg.eventId);
         return { ...reg, event };
       }
@@ -955,6 +1071,7 @@ export async function getCheckinStats(
     };
   } catch (error) {
     if (isPrismaConnectionError(error)) {
+      const { memoryEvents, memoryRegistrations } = syncDevStore();
       const all = Array.from(memoryRegistrations.values()).filter(
         (r) => !targetEventId || r.eventId === targetEventId,
       );
@@ -1010,6 +1127,7 @@ export async function searchRegistrations(
     })) as (AppRegistration & { event?: AppEvent })[];
   } catch (error) {
     if (isPrismaConnectionError(error)) {
+      const { memoryEvents, memoryRegistrations } = syncDevStore();
       const q = cleaned.toLowerCase();
       const results = Array.from(memoryRegistrations.values()).filter(
         (r) =>

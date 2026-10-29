@@ -49,8 +49,8 @@ model Registration {
   updatedAt   DateTime           @updatedAt
 
   @@unique([eventId, email])
+  @@unique([eventId, tableNumber, seatNumber])
   @@index([eventId])
   @@index([email])
   @@index([status])
-  @@index([eventId, tableNumber, seatNumber])
 }

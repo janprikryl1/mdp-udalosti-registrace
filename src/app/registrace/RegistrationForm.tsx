@@ -21,6 +21,7 @@ import {
   User,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 import {
@@ -48,6 +49,7 @@ export function RegistrationForm({
 }: RegistrationFormProps) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [existingId, setExistingId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Selected event
@@ -143,6 +145,7 @@ export function RegistrationForm({
           result.error ||
             "Při registraci došlo k chybě. Zkuste to prosím znovu.",
         );
+        setExistingId(result.existingRegistrationId ?? null);
         setIsSubmitting(false);
         // Refresh tables in case seat was taken by someone else
         fetchTableStatus(selectedEventId);
@@ -167,7 +170,18 @@ export function RegistrationForm({
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Chyba registrace</AlertTitle>
-          <AlertDescription>{serverError}</AlertDescription>
+          <AlertDescription>
+            {serverError}
+            {existingId && (
+              <Link
+                href={`/registrace/uspech?id=${encodeURIComponent(existingId)}`}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-primary/15 border border-primary/40 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/25 transition-colors"
+              >
+                <ArrowRight className="h-3.5 w-3.5" />
+                Zobrazit existující vstupenku
+              </Link>
+            )}
+          </AlertDescription>
         </Alert>
       )}
 

@@ -41,7 +41,8 @@ export function TicketEmail({
   ticketUrl = "http://localhost:3000/registrace/uspech?id=test",
 }: TicketEmailProps) {
   // Gmail completely blocks "data:image/..." URIs.
-  // Using cid:ticket-qr-code pairs with the Resend attachment contentId for 100% reliable rendering in Gmail.
+  // Use the public QR endpoint because Brevo's transactional API treats uploaded
+  // files as regular attachments rather than inline CID images.
   const resolvedQrSrc =
     qrCodeSrc ||
     (qrCodeDataUrl && !qrCodeDataUrl.startsWith("data:")

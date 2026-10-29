@@ -18,6 +18,9 @@ export interface RegisterResult {
   isNew?: boolean;
   message?: string;
   error?: string;
+  existingRegistrationId?: string;
+  emailStatus?: "sent" | "simulated" | "failed";
+  emailMessage?: string;
 }
 
 export async function registerParticipantAction(
@@ -39,8 +42,8 @@ export async function registerParticipantAction(
     // QR code contains the registration UUID directly or verification URL
     const qrDataUrl = await generateQRCodeDataUrl(registration.id);
 
-    // Send confirmation email via Resend
-    await sendTicketEmail({
+    // Send confirmation email via Brevo
+    const emailResult = await sendTicketEmail({
       eventName: registration.event?.title,
       firstName: registration.firstName,
       lastName: registration.lastName,
@@ -52,22 +55,42 @@ export async function registerParticipantAction(
       qrCodeDataUrl: qrDataUrl,
     });
 
+    let emailStatus: RegisterResult["emailStatus"] = "sent";
+    let emailMessage =
+      "Potvrzení s QR kódem bylo úspěšně odesláno na tvůj e-mail.";
+
+    if (emailResult.simulated) {
+      emailStatus = "simulated";
+      emailMessage = "Simulace odeslání (v lokálním vývoji bez Brevo API klíče).";
+    } else if (!emailResult.success) {
+      emailStatus = "failed";
+      emailMessage =
+        "E-mail se nepodařilo odeslat. Vstupenku s QR kódem máš k dispozici níže.";
+    }
+
     return {
       success: true,
       registrationId: registration.id,
       isNew,
-      message: isNew
-        ? "Registrace byla úspěšná! Potvrzení s QR kódem bylo odesláno na tvůj e-mail."
-        : "Tento e-mail již byl dříve zaregistrován. Znovu jsme ti zobrazili tvůj vstupní kód.",
+      emailStatus,
+      emailMessage,
+      message:
+        emailStatus === "sent"
+          ? "Registrace byla úspěšná! Potvrzení s QR kódem bylo odesláno na tvůj e-mail."
+          : `Registrace byla úspěšná! ${emailMessage}`,
     };
   } catch (error) {
     console.error("[Registration Error]", error);
+    const existingId = (error as { existingRegistrationId?: string })
+      ?.existingRegistrationId;
+
     return {
       success: false,
       error:
         error instanceof Error
           ? error.message
           : "Při ukládání registrace došlo k neočekávané chybě. Zkuste to prosím znovu.",
+      existingRegistrationId: existingId,
     };
   }
 }
