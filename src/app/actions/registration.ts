@@ -48,6 +48,8 @@ export async function registerParticipantAction(
       firstName: registration.firstName,
       lastName: registration.lastName,
       email: registration.email,
+      birthDate: registration.birthDate,
+      address: registration.address,
       city: registration.city,
       registrationId: registration.id,
       tableNumber: registration.tableNumber,
@@ -61,7 +63,8 @@ export async function registerParticipantAction(
 
     if (emailResult.simulated) {
       emailStatus = "simulated";
-      emailMessage = "Simulace odeslání (v lokálním vývoji bez Brevo API klíče).";
+      emailMessage =
+        "Simulace odeslání (v lokálním vývoji bez Brevo API klíče).";
     } else if (!emailResult.success) {
       emailStatus = "failed";
       emailMessage =
@@ -120,6 +123,8 @@ export async function getRegistrationDetailsAction(id: string) {
           : undefined,
         firstName: registration.firstName,
         lastName: registration.lastName,
+        birthDate: registration.birthDate ?? undefined,
+        address: registration.address ?? undefined,
         email: registration.email,
         city: registration.city,
         tableNumber: registration.tableNumber,

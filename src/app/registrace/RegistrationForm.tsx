@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
   FileText,
+  Home,
   Info,
   Loader2,
   Lock,
@@ -109,6 +110,8 @@ export function RegistrationForm({
       eventId: selectedEventId,
       firstName: "",
       lastName: "",
+      birthDate: "",
+      address: "",
       email: "",
       city: "",
       tableNumber: null,
@@ -305,32 +308,99 @@ export function RegistrationForm({
           </div>
         </div>
 
-        {/* Email input */}
+        {/* Birth date and Email row */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label
+              htmlFor="birthDate"
+              className="block font-heading text-xs font-semibold uppercase tracking-wider text-foreground mb-1.5"
+            >
+              Datum narození *
+            </label>
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+              </div>
+              <Input
+                id="birthDate"
+                type="date"
+                max={new Date().toISOString().split("T")[0]}
+                disabled={isSubmitting}
+                className={`pl-10 ${errors.birthDate ? "border-rose-500 focus-visible:ring-rose-500/20" : ""}`}
+                {...register("birthDate")}
+              />
+            </div>
+            {errors.birthDate ? (
+              <p className="mt-1 text-xs text-rose-400">
+                {errors.birthDate.message}
+              </p>
+            ) : (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Přesné datum narození účastníka.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="email"
+              className="block font-heading text-xs font-semibold uppercase tracking-wider text-foreground mb-1.5"
+            >
+              E-mailová adresa *
+            </label>
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-muted-foreground">
+                <Mail className="h-4 w-4" />
+              </div>
+              <Input
+                id="email"
+                type="email"
+                placeholder="např. tomas.novak@email.cz"
+                disabled={isSubmitting}
+                className={`pl-10 ${errors.email ? "border-rose-500 focus-visible:ring-rose-500/20" : ""}`}
+                {...register("email")}
+              />
+            </div>
+            {errors.email ? (
+              <p className="mt-1 text-xs text-rose-400">
+                {errors.email.message}
+              </p>
+            ) : (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Na tento e-mail ti obratem pošleme vstupenku s osobním QR kódem.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Exact Address input */}
         <div>
           <label
-            htmlFor="email"
+            htmlFor="address"
             className="block font-heading text-xs font-semibold uppercase tracking-wider text-foreground mb-1.5"
           >
-            E-mailová adresa *
+            Přesná adresa (trvalé bydliště) *
           </label>
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-muted-foreground">
-              <Mail className="h-4 w-4" />
+              <Home className="h-4 w-4" />
             </div>
             <Input
-              id="email"
-              type="email"
-              placeholder="např. tomas.novak@email.cz"
+              id="address"
+              type="text"
+              placeholder="např. Dolní 15, 796 01 Prostějov nebo Brodek 42"
               disabled={isSubmitting}
-              className={`pl-10 ${errors.email ? "border-rose-500 focus-visible:ring-rose-500/20" : ""}`}
-              {...register("email")}
+              className={`pl-10 ${errors.address ? "border-rose-500 focus-visible:ring-rose-500/20" : ""}`}
+              {...register("address")}
             />
           </div>
-          {errors.email ? (
-            <p className="mt-1 text-xs text-rose-400">{errors.email.message}</p>
+          {errors.address ? (
+            <p className="mt-1 text-xs text-rose-400">
+              {errors.address.message}
+            </p>
           ) : (
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Na tento e-mail ti obratem pošleme vstupenku s osobním QR kódem.
+              Ulice a číslo popisné, PSČ a obec trvalého bydliště.
             </p>
           )}
         </div>
@@ -341,7 +411,7 @@ export function RegistrationForm({
             htmlFor="city"
             className="block font-heading text-xs font-semibold uppercase tracking-wider text-foreground mb-1.5"
           >
-            Bydliště / Farnost *
+            Farnost / Bydliště *
           </label>
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-muted-foreground">
@@ -559,8 +629,9 @@ export function RegistrationForm({
                 rezervace místa u stolu a rychlé odbavení při vstupu do sálu.
               </p>
               <p>
-                <strong>Rozsah údajů:</strong> Jméno, příjmení, e-mailová
-                adresa, farnost / obec a případně zvolené číslo stolu a židle.
+                <strong>Rozsah údajů:</strong> Jméno, příjmení, datum narození,
+                přesná adresa trvalého bydliště, farnost / obec, e-mailová
+                adresa a případně zvolené číslo stolu a židle.
               </p>
               <p>
                 <strong>Doba uchování a zabezpečení:</strong> Údaje jsou

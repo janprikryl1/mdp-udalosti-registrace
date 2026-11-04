@@ -9,6 +9,8 @@ export type AppEvent = Event & {
 };
 
 export type AppRegistration = Registration & {
+  birthDate?: string | null;
+  address?: string | null;
   tableNumber?: number | null;
   seatNumber?: number | null;
   event?: AppEvent;
@@ -480,6 +482,8 @@ export async function createOrGetRegistration(data: {
   firstName: string;
   lastName: string;
   email: string;
+  birthDate?: string | null;
+  address?: string | null;
   city: string;
   tableNumber?: number | null;
   seatNumber?: number | null;
@@ -558,7 +562,9 @@ export async function createOrGetRegistration(data: {
       const duplicateError = new Error(
         `Účastník s e-mailem "${normalizedEmail}" je již na tuto akci zaregistrován (${existing.firstName} ${existing.lastName}${seatInfo}). Pro registraci další osoby zadejte prosím její vlastní e-mail.`,
       );
-      (duplicateError as unknown as { existingRegistrationId: string }).existingRegistrationId = existing.id;
+      (
+        duplicateError as unknown as { existingRegistrationId: string }
+      ).existingRegistrationId = existing.id;
       throw duplicateError;
     }
 
@@ -568,6 +574,8 @@ export async function createOrGetRegistration(data: {
         firstName: data.firstName.trim(),
         lastName: data.lastName.trim(),
         email: normalizedEmail,
+        birthDate: data.birthDate?.trim() || null,
+        address: data.address?.trim() || null,
         city: data.city.trim(),
         tableNumber: reqTable,
         seatNumber: reqSeat,
@@ -617,7 +625,9 @@ export async function createOrGetRegistration(data: {
           const duplicateError = new Error(
             `Účastník s e-mailem "${normalizedEmail}" je již na tuto akci zaregistrován (${reg.firstName} ${reg.lastName}${seatInfo}). Pro registraci další osoby zadejte prosím její vlastní e-mail.`,
           );
-          (duplicateError as unknown as { existingRegistrationId: string }).existingRegistrationId = reg.id;
+          (
+            duplicateError as unknown as { existingRegistrationId: string }
+          ).existingRegistrationId = reg.id;
           throw duplicateError;
         }
       }
@@ -629,6 +639,8 @@ export async function createOrGetRegistration(data: {
         firstName: data.firstName.trim(),
         lastName: data.lastName.trim(),
         email: normalizedEmail,
+        birthDate: data.birthDate?.trim() || null,
+        address: data.address?.trim() || null,
         city: data.city.trim(),
         tableNumber: reqTable,
         seatNumber: reqSeat,
@@ -1118,6 +1130,7 @@ export async function searchRegistrations(
           { lastName: { contains: cleaned, mode: "insensitive" } },
           { email: { contains: cleaned, mode: "insensitive" } },
           { city: { contains: cleaned, mode: "insensitive" } },
+          { address: { contains: cleaned, mode: "insensitive" } },
           { id: { equals: cleaned } },
         ],
       },
@@ -1136,6 +1149,7 @@ export async function searchRegistrations(
             r.lastName.toLowerCase().includes(q) ||
             r.email.toLowerCase().includes(q) ||
             r.city.toLowerCase().includes(q) ||
+            Boolean(r.address?.toLowerCase().includes(q)) ||
             r.id.toLowerCase() === q),
       );
       return results.slice(0, 10).map((r) => ({

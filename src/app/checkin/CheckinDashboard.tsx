@@ -33,6 +33,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { formatBirthDate } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import type { CheckinStats, EventWithCounts } from "@/lib/registrations";
 import {
@@ -507,6 +508,22 @@ export function CheckinDashboard({
                   {activeResult.registration.city}
                 </span>
               </div>
+              {activeResult.registration.birthDate ? (
+                <p className="text-xs text-white/95">
+                  Datum narození:{" "}
+                  <strong className="font-semibold">
+                    {formatBirthDate(activeResult.registration.birthDate)}
+                  </strong>
+                </p>
+              ) : null}
+              {activeResult.registration.address ? (
+                <p className="text-xs text-white/95">
+                  Adresa:{" "}
+                  <strong className="font-semibold">
+                    {activeResult.registration.address}
+                  </strong>
+                </p>
+              ) : null}
               <p className="text-xs text-white/80">
                 E-mail: {activeResult.registration.email}
               </p>
@@ -752,6 +769,9 @@ export function CheckinDashboard({
                       </p>
                       <p className="text-[11px] text-muted-foreground">
                         {reg.city} • {reg.email}
+                        {reg.birthDate
+                          ? ` • nar. ${formatBirthDate(reg.birthDate)}`
+                          : ""}
                       </p>
                       {reg.event && !selectedEventId && (
                         <p className="text-[10px] text-primary font-medium">

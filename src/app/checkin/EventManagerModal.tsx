@@ -41,6 +41,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { EventWithCounts } from "@/lib/registrations";
+import { formatBirthDate } from "@/lib/utils";
 
 interface EventManagerModalProps {
   isOpen: boolean;
@@ -300,8 +301,11 @@ export function EventManagerModal({
         .includes(q);
       const matchEmail = a.email.toLowerCase().includes(q);
       const matchCity = a.city.toLowerCase().includes(q);
+      const matchAddress = a.address
+        ? a.address.toLowerCase().includes(q)
+        : false;
       const matchId = a.id.toLowerCase().includes(q);
-      return matchName || matchEmail || matchCity || matchId;
+      return matchName || matchEmail || matchCity || matchAddress || matchId;
     }
     return true;
   });
@@ -309,9 +313,9 @@ export function EventManagerModal({
   const exportAttendeesCsv = () => {
     const rows = filteredAttendees.map(
       (a) =>
-        `"${a.firstName} ${a.lastName}","${a.email}","${a.city}","${a.event?.title || ""}","${a.status === "ATTENDED" ? "Odbaven" : "Registrován"}","${a.attendedAt ? new Intl.DateTimeFormat("cs-CZ", { dateStyle: "short", timeStyle: "medium" }).format(new Date(a.attendedAt)) : ""}","${a.id}"`,
+        `"${a.firstName} ${a.lastName}","${a.birthDate ? formatBirthDate(a.birthDate) : ""}","${a.address || ""}","${a.city}","${a.email}","${a.event?.title || ""}","${a.status === "ATTENDED" ? "Odbaven" : "Registrován"}","${a.attendedAt ? new Intl.DateTimeFormat("cs-CZ", { dateStyle: "short", timeStyle: "medium" }).format(new Date(a.attendedAt)) : ""}","${a.id}"`,
     );
-    const header = `"Jméno a Příjmení","E-mail","Město","Událost","Stav","Čas odbavení","ID"`;
+    const header = `"Jméno a Příjmení","Datum narození","Přesná adresa","Farnost / Město","E-mail","Událost","Stav","Čas odbavení","ID"`;
     const csv = [header, ...rows].join("\n");
     navigator.clipboard.writeText(csv);
     setCopiedAttendees(true);
@@ -778,9 +782,21 @@ export function EventManagerModal({
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3 text-muted-foreground">
-                          <span>{att.email}</span>
-                          <span>•</span>
+                          {att.birthDate && (
+                            <>
+                              <span>Nar: {formatBirthDate(att.birthDate)}</span>
+                              <span>•</span>
+                            </>
+                          )}
+                          {att.address && (
+                            <>
+                              <span>{att.address}</span>
+                              <span>•</span>
+                            </>
+                          )}
                           <span>{att.city}</span>
+                          <span>•</span>
+                          <span>{att.email}</span>
                           {att.event && !attendeeFilterEventId && (
                             <>
                               <span>•</span>

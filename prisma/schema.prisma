@@ -40,6 +40,8 @@ model Registration {
   firstName   String
   lastName    String
   email       String
+  birthDate   String?
+  address     String?
   city        String
   tableNumber Int?
   seatNumber  Int?

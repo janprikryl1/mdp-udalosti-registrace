@@ -12,11 +12,14 @@ import {
   Text,
 } from "@react-email/components";
 import type * as React from "react";
+import { formatBirthDate } from "@/lib/utils";
 
 interface TicketEmailProps {
   eventName?: string;
   firstName: string;
   lastName: string;
+  birthDate?: string | null;
+  address?: string | null;
   email: string;
   city: string;
   registrationId: string;
@@ -31,6 +34,8 @@ export function TicketEmail({
   eventName = "Církevní Silvestr 2026 – Malý princ",
   firstName = "Jan",
   lastName = "Novák",
+  birthDate,
+  address,
   email = "jan.novak@example.cz",
   city = "Prostějov",
   registrationId = "c796b34a-95ee-46a4-97c3-30528e188f57",
@@ -108,6 +113,16 @@ export function TicketEmail({
               <Text style={detailRow}>
                 <strong>Jméno:</strong> {firstName} {lastName}
               </Text>
+              {birthDate ? (
+                <Text style={detailRow}>
+                  <strong>Datum narození:</strong> {formatBirthDate(birthDate)}
+                </Text>
+              ) : null}
+              {address ? (
+                <Text style={detailRow}>
+                  <strong>Přesná adresa:</strong> {address}
+                </Text>
+              ) : null}
               <Text style={detailRow}>
                 <strong>E-mail:</strong> {email}
               </Text>

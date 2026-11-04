@@ -9,6 +9,8 @@ export interface SendTicketEmailParams {
   firstName: string;
   lastName: string;
   email: string;
+  birthDate?: string | null;
+  address?: string | null;
   city: string;
   registrationId: string;
   tableNumber?: number | null;
@@ -54,6 +56,8 @@ export async function sendTicketEmail(
         firstName: params.firstName,
         lastName: params.lastName,
         email: params.email,
+        birthDate: params.birthDate,
+        address: params.address,
         city: params.city,
         registrationId: params.registrationId,
         tableNumber: params.tableNumber,
@@ -86,7 +90,12 @@ export async function sendTicketEmail(
       },
       body: JSON.stringify({
         sender,
-        to: [{ email: params.email, name: `${params.firstName} ${params.lastName}` }],
+        to: [
+          {
+            email: params.email,
+            name: `${params.firstName} ${params.lastName}`,
+          },
+        ],
         subject: `Potvrzení registrace na ${eventTitle} (vstupní QR kód)`,
         htmlContent: html,
         attachment: [
@@ -105,7 +114,8 @@ export async function sendTicketEmail(
     };
 
     if (!response.ok) {
-      const error = result.message || `Brevo API returned HTTP ${response.status}`;
+      const error =
+        result.message || `Brevo API returned HTTP ${response.status}`;
       console.error("[Brevo Error]", { status: response.status, error });
       return { success: false, error };
     }

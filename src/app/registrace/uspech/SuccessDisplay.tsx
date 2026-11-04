@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Copy,
   Download,
+  Home,
   Mail,
   MapPin,
   QrCode,
@@ -19,6 +20,7 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { formatBirthDate } from "@/lib/utils";
 
 interface RegistrationData {
   id: string;
@@ -28,6 +30,8 @@ interface RegistrationData {
   eventDate?: string;
   firstName: string;
   lastName: string;
+  birthDate?: string;
+  address?: string;
   email: string;
   city: string;
   tableNumber?: number | null;
@@ -162,6 +166,28 @@ export function SuccessDisplay({
         <h2 className="mt-2 font-heading text-3xl sm:text-4xl font-semibold text-foreground">
           {registration.firstName} {registration.lastName}
         </h2>
+        {registration.birthDate && (
+          <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5 mt-1 font-body">
+            <Calendar className="h-3.5 w-3.5 text-primary" />
+            <span>
+              Datum narození:{" "}
+              <strong className="text-foreground">
+                {formatBirthDate(registration.birthDate)}
+              </strong>
+            </span>
+          </p>
+        )}
+        {registration.address && (
+          <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5 mt-1 font-body">
+            <Home className="h-3.5 w-3.5 text-primary" />
+            <span>
+              Adresa:{" "}
+              <strong className="text-foreground">
+                {registration.address}
+              </strong>
+            </span>
+          </p>
+        )}
         <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5 mt-1 font-body">
           <MapPin className="h-3.5 w-3.5 text-primary" />
           <span>

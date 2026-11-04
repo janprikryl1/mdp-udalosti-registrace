@@ -38,6 +38,32 @@ export const registrationFormSchema = z.object({
     .trim()
     .min(2, { message: "Příjmení musí mít alespoň 2 znaky" })
     .max(50, { message: "Příjmení je příliš dlouhé" }),
+  birthDate: z
+    .string()
+    .trim()
+    .min(1, { message: "Zadejte přesné datum narození" })
+    .refine(
+      (val) => {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+          const d = new Date(val);
+          return !Number.isNaN(d.getTime()) && d < new Date();
+        }
+        if (/^\d{1,2}\.\s*\d{1,2}\.\s*\d{4}$/.test(val)) {
+          return true;
+        }
+        const d = new Date(val);
+        return !Number.isNaN(d.getTime()) && d < new Date();
+      },
+      { message: "Zadejte platné datum narození" },
+    ),
+  address: z
+    .string()
+    .trim()
+    .min(5, {
+      message:
+        "Zadejte přesnou adresu (např. Dolní 15, Prostějov nebo Brodek 42)",
+    })
+    .max(150, { message: "Adresa je příliš dlouhá" }),
   email: z
     .string()
     .trim()
@@ -46,7 +72,9 @@ export const registrationFormSchema = z.object({
   city: z
     .string()
     .trim()
-    .min(2, { message: "Zadejte své bydliště nebo farnost (např. Prostějov)" })
+    .min(2, {
+      message: "Zadejte svou farnost nebo obec (např. Brodek, Prostějov)",
+    })
     .max(80, { message: "Název je příliš dlouhý" }),
   tableNumber: z.number().int().positive().nullable().optional(),
   seatNumber: z.number().int().positive().nullable().optional(),
